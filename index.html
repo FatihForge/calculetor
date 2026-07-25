@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Minimal Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #e5e3f8;
+        --panel: #b6b7b9;
+        --panel-2: #fcfcfc;
+        --text: #27272a;
+        --muted: #71717a;
+        --button: #dcdbdb;
+        --button-strong: #52525b;
+        --border: #d4d4d8;
+      }
+
+      body.dark {
+        color-scheme: dark;
+        --bg: #18181b;
+        --panel: #27272a;
+        --panel-2: #3f3f46;
+        --text: #f4f4f5;
+        --muted: #a1a1aa;
+        --button: #3f3f46;
+        --button-strong: #52525b;
+        --border: #52525b;
+      }
+
+      body {
+        background-color: var(--bg);
+        color: var(--text);
+        transition: background-color 0.2s ease, color 0.2s ease;
+      }
+
+      .calc-shell {
+        background-color: var(--panel);
+        border-color: var(--border);
+      }
+
+      .screen {
+        background-color: var(--panel-2);
+      }
+
+      .btn {
+        background-color: var(--button);
+        color: var(--text);
+        border-color: var(--border);
+      }
+
+      .btn-strong {
+        background-color: var(--button-strong);
+        color: #fafafa;
+        border-color: var(--border);
+      }
+
+      .btn:hover {
+        background-color: var(--panel-2);
+      }
+
+      .btn-strong:hover {
+        background-color: #404040;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .link-btn {
+        background-color: var(--panel);
+        color: var(--text);
+        border-color: var(--border);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen">
+    <main class="flex min-h-screen items-center justify-center px-4 py-8 sm:px-6">
+      <div class="w-full max-w-sm">
+        <div class="mb-4 flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium uppercase tracking-[0.25em] muted">Compact</p>
+            <h1 class="text-lg font-semibold">Calculator</h1>
+          </div>
+          <button id="themeToggle" type="button" class="rounded-full border border-zinc-300 px-3 py-2 text-sm font-medium transition hover:opacity-80">Dark Mode</button>
+        </div>
+
+        <div class="calc-shell rounded-[2rem] border p-4 sm:p-6">
+          <div class="screen mb-4 rounded-2xl p-4">
+            <div id="expression" class="min-h-6 text-right text-sm muted">0</div>
+            <div id="display" class="min-h-12 break-all text-right text-4xl font-semibold sm:text-5xl">0</div>
+          </div>
+
+          <div class="grid grid-cols-4 gap-2 sm:gap-3">
+            <button class="btn rounded-2xl border p-4 text-lg font-medium transition active:scale-95" data-action="clear">AC</button>
+            <button class="btn rounded-2xl border p-4 text-lg font-medium transition active:scale-95" data-action="delete">DEL</button>
+            <button class="btn rounded-2xl border p-4 text-lg font-medium transition active:scale-95" data-action="percent">%</button>
+            <button class="btn-strong rounded-2xl border p-4 text-lg font-medium transition active:scale-95" data-action="operator" data-value="/">÷</button>
+
+            <button class="btn rounded-2xl border p-4 text-lg font-medium transition active:scale-95" data-value="7">7</button>
+            <button class="btn rounded-2xl border p-4 text-lg font-medium transition active:scale-95" data-value="8">8</button>
+            <button class="btn rounded-2xl border p-4 text-lg font-medium transition active:scale-95" data-value="9">9</button>
+            <button class="btn-strong rounded-2xl border p-4 text-lg font-medium transition active:scale-95" data-action="operator" data-value="*">×</button>
+
+            <button class="btn rounded-2xl border p-4 text-lg font-medium transition active:scale-95" data-value="4">4</button>
+            <button class="btn rounded-2xl border p-4 text-lg font-medium transition active:scale-95" data-value="5">5</button>
+            <button class="btn rounded-2xl border p-4 text-lg font-medium transition active:scale-95" data-value="6">6</button>
+            <button class="btn-strong rounded-2xl border p-4 text-lg font-medium transition active:scale-95" data-action="operator" data-value="-">–</button>
+
+            <button class="btn rounded-2xl border p-4 text-lg font-medium transition active:scale-95" data-value="1">1</button>
+            <button class="btn rounded-2xl border p-4 text-lg font-medium transition active:scale-95" data-value="2">2</button>
+            <button class="btn rounded-2xl border p-4 text-lg font-medium transition active:scale-95" data-value="3">3</button>
+            <button class="btn-strong rounded-2xl border p-4 text-lg font-medium transition active:scale-95" data-action="operator" data-value="+">+</button>
+            <button class="btn rounded-2xl border p-4 text-lg font-medium transition active:scale-95" data-action="log">log</button>
+            <button class="btn rounded-2xl border p-4 text-lg font-medium transition active:scale-95" data-value="0">0</button>
+            
+            <button class="btn rounded-2xl border p-4 text-lg font-medium transition active:scale-95" data-value=".">.</button>
+            <button class="btn-strong rounded-2xl border p-4 text-lg font-medium transition active:scale-95" data-action="equals">=</button>
+          </div>
+        </div>
+
+        <div class="mt-6 flex justify-center gap-3">
+          <a href="https://github.com/FatihForge" target="_blank" rel="noreferrer" class="link-btn rounded-full border px-4 py-2 text-sm font-medium transition hover:opacity-80">GitHub Repo</a>
+          <a href="https://sfnaim-projects.pages.dev" target="_blank" rel="noreferrer" class="link-btn rounded-full border px-4 py-2 text-sm font-medium transition hover:opacity-80">Other Projects</a>
+        </div>
+      </div>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
