@@ -1,0 +1,14 @@
+{
+  "name": "calculator-binance-pay",
+  "version": "1.0.0",
+  "description": "Minimal Calculator with 1st free use and Binance Pay $20 upgrade",
+  "scripts": {
+    "dev": "vite --port 5173",
+    "start": "vite --port 5173",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.4.1"
+  }
+}
