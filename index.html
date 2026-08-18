@@ -161,7 +161,7 @@
         <div class="flex items-center gap-2">
           <button id="premiumTriggerBtn" type="button"
             class="hidden text-xs font-semibold px-2.5 py-1.5 rounded-full bg-[#f0b90b]/10 text-[#f0b90b] border border-[#f0b90b]/30 hover:bg-[#f0b90b]/20 transition flex items-center gap-1">
-            ⚡ <span>$20 PRO</span>
+            ⚡ <span>$5 PRO</span>
           </button>
           <button id="themeToggle" type="button"
             class="rounded-full border border-zinc-400/40 px-3 py-1.5 text-xs font-medium transition hover:opacity-80">Dark
@@ -238,13 +238,10 @@
             Projects</a>
         </div>
 
-        <!-- Dev Reset Helper -->
+        <!-- Upgrade Helper -->
         <div class="flex items-center gap-2 text-xs text-zinc-500">
-          <button id="resetTrialBtn" type="button"
-            class="hover:underline hover:text-zinc-700 dark:hover:text-zinc-300 transition">↺ Reset Free Trial</button>
-          <span>•</span>
-          <button id="quickUnlockBtn" type="button" class="hover:underline hover:text-amber-500 transition">⚡ Quick
-            Unlock</button>
+          <button id="quickUnlockBtn" type="button" class="hover:underline hover:text-[#f0b90b] transition">⚡ Upgrade
+            ($5 PRO)</button>
         </div>
       </div>
     </div>
@@ -283,7 +280,7 @@
           Unlock Lifetime Access
         </h2>
         <p class="text-xs text-zinc-400 mt-1 leading-relaxed">
-          Your 1st free calculation is completed! Upgrade to the <strong>$20 Premium Plan</strong> to view unlimited
+          Your 1st free calculation is completed! Upgrade to the <strong>$5 Premium Plan</strong> to view unlimited
           results, instant calculations & scientific functions.
         </p>
       </div>
@@ -293,7 +290,7 @@
         <div>
           <span class="text-xs text-zinc-400 font-medium">One-Time Payment</span>
           <div class="flex items-baseline gap-1.5">
-            <span class="text-2xl font-extrabold text-[#f0b90b]">$20.00</span>
+            <span class="text-2xl font-extrabold text-[#f0b90b]">$5.00</span>
             <span class="text-xs text-zinc-400 font-medium">USDT / USD</span>
           </div>
         </div>
@@ -358,20 +355,120 @@
       <div class="space-y-2.5">
         <div>
           <label for="txIdInput" class="block text-[11px] font-medium text-zinc-400 mb-1">Binance Transaction ID / Order
-            ID (Optional):</label>
-          <input id="txIdInput" type="text" placeholder="e.g. 29384729184 or TxID"
+            ID:</label>
+          <input id="txIdInput" type="text" inputmode="numeric" placeholder="Enter Binance Transaction ID"
             class="w-full bg-[#121418] border border-[#2e333e] focus:border-[#f0b90b] focus:outline-none text-white text-xs px-3.5 py-2.5 rounded-xl transition placeholder:text-zinc-600" />
+
+          <!-- Validation Error Message & Support Container -->
+          <div id="txErrorContainer"
+            class="hidden mt-2 p-2.5 bg-rose-950/40 border border-rose-800/60 rounded-xl text-xs text-rose-300">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5 font-semibold text-rose-400">
+                <svg class="w-4 h-4 text-rose-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Invalid Transaction ID</span>
+              </div>
+              <button type="button" id="openSupportFromErrorBtn"
+                class="text-[#0088cc] hover:text-[#24a1de] font-semibold underline flex items-center gap-1 shrink-0 text-[11px] cursor-pointer">
+                <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                  <path
+                    d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+                </svg>
+                Contact Support
+              </button>
+            </div>
+          </div>
         </div>
 
         <button id="verifyPayBtn" type="button"
-          class="w-full bg-[#f0b90b] hover:bg-[#fcd535] text-zinc-950 font-bold py-3 px-4 rounded-xl transition shadow-binance active:scale-[0.98] flex items-center justify-center gap-2 text-sm">
-          <span>✨ Verify & Unlock Calculator Result ($20)</span>
+          class="w-full bg-[#f0b90b] hover:bg-[#fcd535] text-zinc-950 font-bold py-3 px-4 rounded-xl transition shadow-binance active:scale-[0.98] flex items-center justify-center gap-2 text-sm mt-2">
+          <span>✨ Verify & Unlock Calculator Result ($5)</span>
         </button>
 
-        <p class="text-[11px] text-center text-zinc-500">
-          Payment will be verified instantly to unlock the pending calculation.
-        </p>
+        <div class="pt-2 text-center text-[11px] text-zinc-400 flex items-center justify-center gap-1.5">
+          <span>Facing issues?</span>
+          <button type="button" id="openSupportModalBtn"
+            class="text-[#0088cc] hover:text-[#24a1de] underline font-medium flex items-center gap-1 cursor-pointer">
+            <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+              <path
+                d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+            </svg>
+            Contact Support
+          </button>
+        </div>
       </div>
+
+    </div>
+  </div>
+
+  <!-- SUPPORT EMAIL CONTACT MODAL -->
+  <div id="supportModal"
+    class="modal-backdrop modal-hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+    <div
+      class="modal-content relative w-full max-w-md bg-[#181a20] text-zinc-100 rounded-3xl border border-[#2b2f36] shadow-2xl p-6 sm:p-7 my-auto max-h-[92vh] overflow-y-auto custom-scroll">
+
+      <!-- Close Button -->
+      <button id="closeSupportModalBtn" type="button"
+        class="absolute top-4 right-4 text-zinc-400 hover:text-white p-2 rounded-full hover:bg-zinc-800 transition cursor-pointer"
+        title="Close support modal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+
+      <!-- Support Header -->
+      <div class="flex items-center gap-2.5 mb-2">
+        <div class="w-8 h-8 rounded-full bg-[#f0b90b]/15 flex items-center justify-center text-[#f0b90b]">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+            <path
+              d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold tracking-tight text-white">Contact Support</h3>
+      </div>
+
+      <p class="text-xs text-zinc-400 mb-4 leading-relaxed">
+        Send a direct message to our support inbox. We will reply to your email promptly.
+      </p>
+
+      <!-- Support Form -->
+      <form id="supportForm" class="space-y-3">
+        <div>
+          <label for="supportName" class="block text-[11px] font-medium text-zinc-400 mb-1">Your Name *</label>
+          <input id="supportName" type="text" required placeholder="e.g. Jhon"
+            class="w-full bg-[#121418] border border-[#2e333e] focus:border-[#f0b90b] focus:outline-none text-white text-xs px-3.5 py-2.5 rounded-xl transition placeholder:text-zinc-600" />
+        </div>
+
+        <div>
+          <label for="supportEmail" class="block text-[11px] font-medium text-zinc-400 mb-1">Your Email Address
+            *</label>
+          <input id="supportEmail" type="email" required placeholder="e.g. yourname@gmail.com"
+            class="w-full bg-[#121418] border border-[#2e333e] focus:border-[#f0b90b] focus:outline-none text-white text-xs px-3.5 py-2.5 rounded-xl transition placeholder:text-zinc-600" />
+        </div>
+
+        <div>
+          <label for="supportSubject" class="block text-[11px] font-medium text-zinc-400 mb-1">Subject / Topic</label>
+          <input id="supportSubject" type="text" placeholder="e.g. Binance Pay Verification / TxID issue"
+            class="w-full bg-[#121418] border border-[#2e333e] focus:border-[#f0b90b] focus:outline-none text-white text-xs px-3.5 py-2.5 rounded-xl transition placeholder:text-zinc-600" />
+        </div>
+
+        <div>
+          <label for="supportMessage" class="block text-[11px] font-medium text-zinc-400 mb-1">Message *</label>
+          <textarea id="supportMessage" rows="3" required
+            placeholder="Describe your issue or enter your Binance Transaction ID..."
+            class="w-full bg-[#121418] border border-[#2e333e] focus:border-[#f0b90b] focus:outline-none text-white text-xs px-3.5 py-2.5 rounded-xl transition placeholder:text-zinc-600 custom-scroll resize-none"></textarea>
+        </div>
+
+        <button id="sendSupportMsgBtn" type="submit"
+          class="w-full bg-[#f0b90b] hover:bg-[#fcd535] text-zinc-950 font-bold py-3 px-4 rounded-xl transition shadow-binance active:scale-[0.98] flex items-center justify-center gap-2 text-xs mt-3 cursor-pointer">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+          </svg>
+          <span id="sendSupportBtnText">Send Message to Support</span>
+        </button>
+      </form>
 
     </div>
   </div>

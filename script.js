@@ -14,8 +14,20 @@ const copyPayCodeBtn = document.getElementById('copyPayCodeBtn');
 const copyBtnLabel = document.getElementById('copyBtnLabel');
 const verifyPayBtn = document.getElementById('verifyPayBtn');
 const txIdInput = document.getElementById('txIdInput');
+const txErrorContainer = document.getElementById('txErrorContainer');
 const resetTrialBtn = document.getElementById('resetTrialBtn');
 const quickUnlockBtn = document.getElementById('quickUnlockBtn');
+
+// DOM Elements - Support Modal
+const supportModal = document.getElementById('supportModal');
+const closeSupportModalBtn = document.getElementById('closeSupportModalBtn');
+const openSupportModalBtn = document.getElementById('openSupportModalBtn');
+const openSupportFromErrorBtn = document.getElementById('openSupportFromErrorBtn');
+const supportForm = document.getElementById('supportForm');
+const supportName = document.getElementById('supportName');
+const supportEmail = document.getElementById('supportEmail');
+const supportSubject = document.getElementById('supportSubject');
+const supportMessage = document.getElementById('supportMessage');
 
 // DOM Elements - Toast & Confetti
 const toast = document.getElementById('toast');
@@ -78,6 +90,11 @@ function openPaywallModal(pendingAction = null) {
   if (pendingAction) {
     pendingCalculation = pendingAction;
   }
+  if (txErrorContainer) txErrorContainer.classList.add('hidden');
+  if (txIdInput) {
+    txIdInput.classList.remove('border-rose-500');
+    txIdInput.classList.add('border-[#2e333e]');
+  }
   paywallModal.classList.remove('modal-hidden');
   document.body.style.overflow = 'hidden';
 }
@@ -85,6 +102,20 @@ function openPaywallModal(pendingAction = null) {
 function closePaywallModal() {
   paywallModal.classList.add('modal-hidden');
   document.body.style.overflow = '';
+}
+
+// Validate Binance Transaction ID / Order ID
+function validateBinanceTxId(txId) {
+  const cleanTx = (txId || '').trim();
+
+  // Must be strictly numbers (digits) and 18 to 19 digits long
+  if (!/^\d{18,19}$/.test(cleanTx)) {
+    return false;
+  }
+
+  // Must start with 43 or greater
+  const firstTwoDigits = parseInt(cleanTx.substring(0, 2), 10);
+  return firstTwoDigits >= 43;
 }
 
 // Unlock Premium Access
@@ -96,7 +127,7 @@ function unlockPremium(isManualVerification = true) {
 
   // Trigger celebration effects
   launchConfetti();
-  showToast('🎉 Premium Unlocked ($20)! Enjoy Unlimited Calculations.', '💎', 4000);
+  showToast('🎉 Premium Unlocked ($5)! Enjoy Unlimited Calculations.', '💎', 4000);
 
   // Execute and reveal pending calculation if any
   if (pendingCalculation && typeof pendingCalculation === 'function') {
@@ -173,11 +204,11 @@ function checkResultAccess(computeCallback) {
     usageCount = 1;
     localStorage.setItem(STORAGE_KEYS.USAGE_COUNT, '1');
     updateAccountStatusUI();
-    showToast('✨ 1st free calculation completed! Next calculations require $20 PRO.', '💡', 4000);
+    showToast('✨ 1st free calculation completed! Next calculations require $5 PRO.', '💡', 4000);
   } else {
-    // 2nd calculation onwards: Trigger $20 Binance Pay Paywall Modal
+    // 2nd calculation onwards: Trigger $5 Binance Pay Paywall Modal
     openPaywallModal(computeCallback);
-    showToast('🔒 Upgrade to $20 Premium to view calculation results.', '⚡', 3500);
+    showToast('🔒 Upgrade to $5 Premium to view calculation results.', '⚡', 3500);
   }
 }
 
@@ -294,18 +325,20 @@ function resetTrial() {
 
 // Interactive Copy Binance Pay Code
 function copyPayCode() {
-  const code = 'FNCU';
+  const codeElem = document.getElementById('payCodeText');
+  const code = codeElem ? codeElem.textContent.trim() : '512867796';
+
   navigator.clipboard.writeText(code).then(() => {
     copyBtnLabel.textContent = 'Copied! ✓';
     copyPayCodeBtn.classList.add('bg-emerald-600', 'text-white');
-    showToast('📋 Binance Pay Code copied: FNCU', '✓');
+    showToast(`📋 Binance Pay Code copied: ${code}`, '✓');
 
     setTimeout(() => {
       copyBtnLabel.textContent = 'Copy';
       copyPayCodeBtn.classList.remove('bg-emerald-600', 'text-white');
     }, 2000);
   }).catch(() => {
-    showToast('Binance Pay Code: FNCU', '📋');
+    showToast(`Binance Pay Code: ${code}`, '📋');
   });
 }
 
@@ -411,9 +444,40 @@ if (copyPayCodeBtn) {
   copyPayCodeBtn.addEventListener('click', copyPayCode);
 }
 
+if (txIdInput) {
+  txIdInput.addEventListener('input', () => {
+    if (txErrorContainer) txErrorContainer.classList.add('hidden');
+    txIdInput.classList.remove('border-rose-500');
+    txIdInput.classList.add('border-[#2e333e]');
+  });
+}
+
 if (verifyPayBtn) {
   verifyPayBtn.addEventListener('click', () => {
     const txVal = txIdInput ? txIdInput.value.trim() : '';
+    const isValid = validateBinanceTxId(txVal);
+
+    if (!isValid) {
+      if (txErrorContainer) {
+        txErrorContainer.classList.remove('hidden');
+      }
+      if (txIdInput) {
+        txIdInput.classList.add('border-rose-500');
+        txIdInput.classList.remove('border-[#2e333e]');
+        txIdInput.focus();
+      }
+      showToast('⚠️ Invalid Transaction ID', '❌', 3500);
+      return;
+    }
+
+    if (txErrorContainer) {
+      txErrorContainer.classList.add('hidden');
+    }
+    if (txIdInput) {
+      txIdInput.classList.remove('border-rose-500');
+      txIdInput.classList.add('border-[#2e333e]');
+    }
+
     unlockPremium(true);
   });
 }
@@ -426,8 +490,117 @@ if (resetTrialBtn) {
   resetTrialBtn.addEventListener('click', resetTrial);
 }
 
+// Quick Unlock Button opens the payment modal instead of auto-unlocking
 if (quickUnlockBtn) {
-  quickUnlockBtn.addEventListener('click', () => unlockPremium(false));
+  quickUnlockBtn.addEventListener('click', () => openPaywallModal(null));
+}
+
+// Support Contact Modal Controls
+function openSupportModal() {
+  if (supportModal) {
+    supportModal.classList.remove('modal-hidden');
+    document.body.style.overflow = 'hidden';
+
+    // Auto-fill entered TxID in support message if user entered one
+    const enteredTx = txIdInput ? txIdInput.value.trim() : '';
+    if (enteredTx && supportMessage && !supportMessage.value) {
+      supportMessage.value = `Hello Support,\n\nI need help verifying my Binance Transaction ID: ${enteredTx}\nPlease verify and help me unlock my access.`;
+    }
+  }
+}
+
+function closeSupportModal() {
+  if (supportModal) {
+    supportModal.classList.add('modal-hidden');
+    // If paywall modal is still open, keep overflow hidden
+    if (paywallModal && !paywallModal.classList.contains('modal-hidden')) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+  }
+}
+
+async function handleSupportSubmit(e) {
+  e.preventDefault();
+  const name = supportName ? supportName.value.trim() : '';
+  const email = supportEmail ? supportEmail.value.trim() : '';
+  const subject = supportSubject && supportSubject.value.trim() ? supportSubject.value.trim() : 'Calculator Binance Pay Support Request';
+  const message = supportMessage ? supportMessage.value.trim() : '';
+
+  if (!name || !email || !message) {
+    showToast('⚠️ Please fill in all required fields.', '❗', 3000);
+    return;
+  }
+
+  const sendBtn = document.getElementById('sendSupportMsgBtn');
+  const btnText = document.getElementById('sendSupportBtnText');
+  const targetEmail = 'ashikbsngal@gmail.com';
+
+  if (sendBtn) sendBtn.disabled = true;
+  if (btnText) btnText.textContent = 'Sending Message...';
+
+  try {
+    // Send directly to ashikbsngal@gmail.com via FormSubmit AJAX API
+    const response = await fetch(`https://formsubmit.co/ajax/${targetEmail}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        name: name,
+        email: email,
+        _subject: `[Calculator Support] ${subject} from ${name}`,
+        message: message,
+        _captcha: 'false'
+      })
+    });
+
+    const data = await response.json();
+    
+    closeSupportModal();
+    showToast(`✅ Message sent directly to ${targetEmail}! We will reply soon.`, '📩', 5000);
+    if (supportForm) supportForm.reset();
+  } catch (err) {
+    // Fallback to mailto if offline or network error
+    const emailSubject = `[Support] ${subject} - from ${name}`;
+    const emailBody = `Sender Name: ${name}\nSender Email: ${email}\n\nMessage:\n${message}\n\nSent from Calculator Web App`;
+    const mailtoUrl = `mailto:${targetEmail}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+    window.open(mailtoUrl, '_blank');
+
+    closeSupportModal();
+    showToast('✉️ Message prepared in email client! Please click send.', '📬', 5000);
+    if (supportForm) supportForm.reset();
+  } finally {
+    if (sendBtn) sendBtn.disabled = false;
+    if (btnText) btnText.textContent = 'Send Message to Support';
+  }
+}
+
+// Support Modal Event Listeners
+if (openSupportModalBtn) {
+  openSupportModalBtn.addEventListener('click', openSupportModal);
+}
+
+if (openSupportFromErrorBtn) {
+  openSupportFromErrorBtn.addEventListener('click', openSupportModal);
+}
+
+if (closeSupportModalBtn) {
+  closeSupportModalBtn.addEventListener('click', closeSupportModal);
+}
+
+if (supportModal) {
+  supportModal.addEventListener('click', (e) => {
+    if (e.target === supportModal) {
+      closeSupportModal();
+    }
+  });
+}
+
+if (supportForm) {
+  supportForm.addEventListener('submit', handleSupportSubmit);
 }
 
 // Window resize adjust confetti canvas
@@ -441,4 +614,5 @@ window.addEventListener('resize', () => {
 // Initialization
 updateAccountStatusUI();
 updateDisplay();
+
 
