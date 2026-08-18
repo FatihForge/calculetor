@@ -1,13 +1,35 @@
-// DOM Elements - Calculator
+// =========================================================
+// Minimal Calculator - Standard Free Tier & PRO Scientific Suite
+// =========================================================
+
+// DOM Elements - Calculator Display & Container
+const calcContainer = document.getElementById('calcContainer');
 const display = document.getElementById('display');
 const expression = document.getElementById('expression');
+const copyResultBtn = document.getElementById('copyResultBtn');
+const modeTitle = document.getElementById('modeTitle');
+const proTitleBadge = document.getElementById('proTitleBadge');
+const memoryIndicator = document.getElementById('memoryIndicator');
+const angleModeDisplay = document.getElementById('angleModeDisplay');
 const themeToggle = document.getElementById('themeToggle');
 const buttons = document.querySelectorAll('button');
 
-// DOM Elements - Paywall & Status
+// DOM Elements - PRO Toolbar & Sections
+const proScientificSection = document.getElementById('proScientificSection');
+const soundToggleBtn = document.getElementById('soundToggleBtn');
+const soundIcon = document.getElementById('soundIcon');
+const historyToggleBtn = document.getElementById('historyToggleBtn');
+const angleToggleBtn = document.getElementById('angleToggleBtn');
+
+// DOM Elements - Account Status & Paywall
 const userStatusBadge = document.getElementById('userStatusBadge');
 const badgeText = document.getElementById('badgeText');
+const badgeDot = document.getElementById('badgeDot');
 const premiumTriggerBtn = document.getElementById('premiumTriggerBtn');
+const quickUnlockBtn = document.getElementById('quickUnlockBtn');
+const resetTrialBtn = document.getElementById('resetTrialBtn');
+
+// DOM Elements - Binance Pay Modal
 const paywallModal = document.getElementById('paywallModal');
 const closeModalBtn = document.getElementById('closeModalBtn');
 const copyPayCodeBtn = document.getElementById('copyPayCodeBtn');
@@ -15,14 +37,18 @@ const copyBtnLabel = document.getElementById('copyBtnLabel');
 const verifyPayBtn = document.getElementById('verifyPayBtn');
 const txIdInput = document.getElementById('txIdInput');
 const txErrorContainer = document.getElementById('txErrorContainer');
-const resetTrialBtn = document.getElementById('resetTrialBtn');
-const quickUnlockBtn = document.getElementById('quickUnlockBtn');
+const openSupportFromErrorBtn = document.getElementById('openSupportFromErrorBtn');
+
+// DOM Elements - History Modal
+const historyModal = document.getElementById('historyModal');
+const closeHistoryModalBtn = document.getElementById('closeHistoryModalBtn');
+const historyListContainer = document.getElementById('historyListContainer');
+const clearHistoryBtn = document.getElementById('clearHistoryBtn');
 
 // DOM Elements - Support Modal
 const supportModal = document.getElementById('supportModal');
 const closeSupportModalBtn = document.getElementById('closeSupportModalBtn');
 const openSupportModalBtn = document.getElementById('openSupportModalBtn');
-const openSupportFromErrorBtn = document.getElementById('openSupportFromErrorBtn');
 const supportForm = document.getElementById('supportForm');
 const supportName = document.getElementById('supportName');
 const supportEmail = document.getElementById('supportEmail');
@@ -35,29 +61,117 @@ const toastIcon = document.getElementById('toastIcon');
 const toastMsg = document.getElementById('toastMsg');
 const confettiCanvas = document.getElementById('confettiCanvas');
 
-// State Variables
+// =========================================================
+// Storage Keys & Persistent State
+// =========================================================
+const STORAGE_KEYS = {
+  USAGE_COUNT: 'calc_usage_count',
+  LAST_DATE: 'calc_last_date',
+  IS_PREMIUM: 'calc_is_premium',
+  HISTORY: 'calc_history_list',
+  SOUND_ENABLED: 'calc_sound_enabled',
+  ANGLE_MODE: 'calc_angle_mode',
+  THEME: 'calc_theme'
+};
+
+// Helper: Get local date string in YYYY-MM-DD
+function getTodayDateString() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// Check & Auto-Reset Daily Limit on new day
+function checkDailyReset() {
+  const today = getTodayDateString();
+  const storedDate = localStorage.getItem(STORAGE_KEYS.LAST_DATE);
+
+  if (storedDate !== today) {
+    // New day -> Reset daily usage count to 0
+    localStorage.setItem(STORAGE_KEYS.LAST_DATE, today);
+    localStorage.setItem(STORAGE_KEYS.USAGE_COUNT, '0');
+    return 0;
+  }
+
+  return parseInt(localStorage.getItem(STORAGE_KEYS.USAGE_COUNT) || '0', 10);
+}
+
+// Initialize persistent state
+let isPremium = localStorage.getItem(STORAGE_KEYS.IS_PREMIUM) === 'true';
+let usageCount = checkDailyReset();
+let soundEnabled = localStorage.getItem(STORAGE_KEYS.SOUND_ENABLED) !== 'false';
+let angleMode = localStorage.getItem(STORAGE_KEYS.ANGLE_MODE) || 'DEG'; // 'DEG' or 'RAD'
+let memoryValue = 0;
+let calculationHistory = [];
+try {
+  calculationHistory = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
+} catch {
+  calculationHistory = [];
+}
+
+let pendingCalculation = null;
+
+// Calculator Internal Arithmetic State
 let currentValue = '0';
 let previousValue = null;
 let operator = null;
 let overwrite = false;
 
-// Monetization State (Persisted in localStorage)
-const STORAGE_KEYS = {
-  USAGE_COUNT: 'calc_usage_count',
-  IS_PREMIUM: 'calc_is_premium'
-};
+// =========================================================
+// Web Audio API Synthesizer (Click Sound FX)
+// =========================================================
+let audioCtx = null;
+function playKeySound(type = 'default') {
+  if (!soundEnabled || !isPremium) return;
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    if (!audioCtx) audioCtx = new AudioContextClass();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
 
-let usageCount = parseInt(localStorage.getItem(STORAGE_KEYS.USAGE_COUNT) || '0', 10);
-let isPremium = localStorage.getItem(STORAGE_KEYS.IS_PREMIUM) === 'true';
-let pendingCalculation = null;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
 
-// Toast Notification Helper
+    const now = audioCtx.currentTime;
+    if (type === 'equals') {
+      osc.frequency.setValueAtTime(520, now);
+      osc.frequency.exponentialRampToValueAtTime(780, now + 0.08);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.09);
+      osc.start(now);
+      osc.stop(now + 0.09);
+    } else if (type === 'clear') {
+      osc.frequency.setValueAtTime(320, now);
+      osc.frequency.exponentialRampToValueAtTime(180, now + 0.06);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.07);
+      osc.start(now);
+      osc.stop(now + 0.07);
+    } else {
+      osc.frequency.setValueAtTime(420, now);
+      gain.gain.setValueAtTime(0.05, now);
+      gain.gain.linearRampToValueAtTime(0.001, now + 0.04);
+      osc.start(now);
+      osc.stop(now + 0.04);
+    }
+  } catch {
+    // Audio unsupported or blocked by browser policy
+  }
+}
+
+// =========================================================
+// Toast Notification Utility
+// =========================================================
 let toastTimer = null;
 function showToast(message, icon = '✨', duration = 3500) {
-  if (!toast) return;
+  if (!toast || !toastMsg || !toastIcon) return;
   toastIcon.textContent = icon;
   toastMsg.textContent = message;
-  
+
   toast.classList.remove('-translate-y-12', 'opacity-0', 'pointer-events-none');
   toast.classList.add('translate-y-0', 'opacity-100');
 
@@ -68,24 +182,99 @@ function showToast(message, icon = '✨', duration = 3500) {
   }, duration);
 }
 
-// Update UI Status Badge
+// =========================================================
+// Account Status & UI Mode Management
+// =========================================================
 function updateAccountStatusUI() {
+  usageCount = checkDailyReset();
+
   if (isPremium) {
-    userStatusBadge.className = 'inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-[#f0b90b]/15 text-[#f0b90b] border border-[#f0b90b]/30 shadow-sm';
-    userStatusBadge.innerHTML = '<span>👑</span> <span>PRO Lifetime</span>';
+    // 👑 PRO PLAN MODE: Positive Green Color
+    if (userStatusBadge) {
+      userStatusBadge.className = 'inline-flex items-center gap-1.5 text-xs px-2.5 py-0.5 rounded-full font-semibold whitespace-nowrap bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-sm transition-all';
+      userStatusBadge.innerHTML = '<span>👑</span> <span>PRO Version</span>';
+    }
+
+    if (modeTitle) modeTitle.textContent = 'Scientific PRO';
+    if (proTitleBadge) proTitleBadge.classList.add('hidden');
     if (premiumTriggerBtn) premiumTriggerBtn.classList.add('hidden');
-  } else if (usageCount === 0) {
-    userStatusBadge.className = 'inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20';
-    userStatusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span><span>1 Free Use Left</span>';
-    if (premiumTriggerBtn) premiumTriggerBtn.classList.add('hidden');
+    if (soundToggleBtn) soundToggleBtn.classList.remove('hidden');
+    if (historyToggleBtn) historyToggleBtn.classList.remove('hidden');
+    if (angleModeDisplay) {
+      angleModeDisplay.classList.remove('hidden');
+      angleModeDisplay.textContent = angleMode;
+    }
+    if (angleToggleBtn) angleToggleBtn.textContent = angleMode;
+
+    // Show Scientific Suite with smooth animation
+    if (proScientificSection) {
+      proScientificSection.classList.remove('hidden');
+    }
+
+    if (calcContainer) {
+      calcContainer.classList.remove('max-w-sm');
+      calcContainer.classList.add('max-w-md');
+    }
+
+    if (quickUnlockBtn) {
+      quickUnlockBtn.innerHTML = '<span>👑</span> <span>PRO Active</span>';
+      quickUnlockBtn.className = 'link-btn rounded-full border px-3.5 py-1.5 text-xs font-semibold text-emerald-500 border-emerald-500/30 transition flex items-center gap-1 shadow-sm whitespace-nowrap';
+    }
+
+    // Memory Indicator
+    if (memoryIndicator) {
+      if (memoryValue !== 0) {
+        memoryIndicator.classList.remove('hidden');
+      } else {
+        memoryIndicator.classList.add('hidden');
+      }
+    }
+
   } else {
-    userStatusBadge.className = 'inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30';
-    userStatusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span><span>Free Limit Reached</span>';
-    if (premiumTriggerBtn) premiumTriggerBtn.classList.remove('hidden');
+    // 🆓 FREE PLAN MODE: Hide all PRO features and Scientific section
+    if (modeTitle) modeTitle.textContent = 'Standard';
+    if (proTitleBadge) proTitleBadge.classList.add('hidden');
+    if (soundToggleBtn) soundToggleBtn.classList.add('hidden');
+    if (historyToggleBtn) historyToggleBtn.classList.add('hidden');
+    if (angleModeDisplay) angleModeDisplay.classList.add('hidden');
+    if (memoryIndicator) memoryIndicator.classList.add('hidden');
+
+    // Hide Scientific Suite completely
+    if (proScientificSection) {
+      proScientificSection.classList.add('hidden');
+    }
+
+    if (calcContainer) {
+      calcContainer.classList.remove('max-w-md');
+      calcContainer.classList.add('max-w-sm');
+    }
+
+    if (quickUnlockBtn) {
+      quickUnlockBtn.innerHTML = '<span>⚡</span> <span>Upgrade PRO</span>';
+      quickUnlockBtn.className = 'link-btn rounded-full border px-3.5 py-1.5 text-xs font-semibold text-[#f0b90b] border-[#f0b90b]/40 hover:bg-[#f0b90b]/10 transition flex items-center gap-1 cursor-pointer shadow-sm whitespace-nowrap';
+    }
+
+    if (usageCount === 0) {
+      // 1 Free Use Available: Yellow / Amber Alert Color
+      if (userStatusBadge) {
+        userStatusBadge.className = 'inline-flex items-center gap-1.5 text-xs px-2.5 py-0.5 rounded-full font-medium whitespace-nowrap bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 shadow-sm transition-all';
+        userStatusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shrink-0"></span><span>1 Free Use Left</span>';
+      }
+      if (premiumTriggerBtn) premiumTriggerBtn.classList.add('hidden');
+    } else {
+      // Daily Free Limit Reached: Alert / Warning Color
+      if (userStatusBadge) {
+        userStatusBadge.className = 'inline-flex items-center gap-1.5 text-xs px-2.5 py-0.5 rounded-full font-medium whitespace-nowrap bg-amber-600/15 text-amber-700 dark:text-amber-400 border border-amber-600/30 shadow-sm transition-all';
+        userStatusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping shrink-0"></span><span>Daily Limit Reached</span>';
+      }
+      if (premiumTriggerBtn) premiumTriggerBtn.classList.remove('hidden');
+    }
   }
 }
 
-// Paywall Modal Controls
+// =========================================================
+// Paywall Modal Management
+// =========================================================
 function openPaywallModal(pendingAction = null) {
   if (pendingAction) {
     pendingCalculation = pendingAction;
@@ -95,31 +284,31 @@ function openPaywallModal(pendingAction = null) {
     txIdInput.classList.remove('border-rose-500');
     txIdInput.classList.add('border-[#2e333e]');
   }
-  paywallModal.classList.remove('modal-hidden');
-  document.body.style.overflow = 'hidden';
+  if (paywallModal) {
+    paywallModal.classList.remove('modal-hidden');
+    document.body.style.overflow = 'hidden';
+  }
 }
 
 function closePaywallModal() {
-  paywallModal.classList.add('modal-hidden');
-  document.body.style.overflow = '';
+  if (paywallModal) {
+    paywallModal.classList.add('modal-hidden');
+    document.body.style.overflow = '';
+  }
 }
 
-// Validate Binance Transaction ID / Order ID
+// Validate Binance Transaction ID (18-19 digits, starts with 43+)
 function validateBinanceTxId(txId) {
   const cleanTx = (txId || '').trim();
-
-  // Must be strictly numbers (digits) and 18 to 19 digits long
   if (!/^\d{18,19}$/.test(cleanTx)) {
     return false;
   }
-
-  // Must start with 43 or greater
   const firstTwoDigits = parseInt(cleanTx.substring(0, 2), 10);
   return firstTwoDigits >= 43;
 }
 
-// Unlock Premium Access
-function unlockPremium(isManualVerification = true) {
+// Unlock PRO Lifetime Access
+function unlockPremium() {
   isPremium = true;
   localStorage.setItem(STORAGE_KEYS.IS_PREMIUM, 'true');
   updateAccountStatusUI();
@@ -127,7 +316,7 @@ function unlockPremium(isManualVerification = true) {
 
   // Trigger celebration effects
   launchConfetti();
-  showToast('🎉 Premium Unlocked ($5)! Enjoy Unlimited Calculations.', '💎', 4000);
+  showToast('🎉 Scientific Suite & Unlimited Access Enabled.', '👑', 4500);
 
   // Execute and reveal pending calculation if any
   if (pendingCalculation && typeof pendingCalculation === 'function') {
@@ -137,7 +326,58 @@ function unlockPremium(isManualVerification = true) {
   }
 }
 
-// Format calculation display number
+// =========================================================
+// App Reset Option (Always Resets Back to Free Plan)
+// =========================================================
+function resetTrial() {
+  // Clear all localStorage state back to Free plan
+  localStorage.removeItem(STORAGE_KEYS.IS_PREMIUM);
+  localStorage.setItem(STORAGE_KEYS.USAGE_COUNT, '0');
+  localStorage.setItem(STORAGE_KEYS.LAST_DATE, getTodayDateString());
+  localStorage.removeItem(STORAGE_KEYS.HISTORY);
+
+  isPremium = false;
+  usageCount = 0;
+  memoryValue = 0;
+  calculationHistory = [];
+  pendingCalculation = null;
+
+  clearAll();
+  updateAccountStatusUI();
+  renderHistoryList();
+  showToast('🔄 App reset to Free Plan! 1 daily free calculation available.', '✨', 4000);
+}
+
+// =========================================================
+// Calculation Daily Limitation Gate
+// =========================================================
+function checkCalculationAccess(computeCallback) {
+  if (isPremium) {
+    computeCallback();
+    return;
+  }
+
+  usageCount = checkDailyReset();
+
+  if (usageCount === 0) {
+    // 1st Calculation of the day: Allowed
+    computeCallback();
+    usageCount = 1;
+    const today = getTodayDateString();
+    localStorage.setItem(STORAGE_KEYS.USAGE_COUNT, '1');
+    localStorage.setItem(STORAGE_KEYS.LAST_DATE, today);
+    updateAccountStatusUI();
+    showToast('Free limit reached!!', '⚠️', 4000);
+  } else {
+    // 2nd Attempt onwards: Blocked -> Show Paywall Modal
+    openPaywallModal(computeCallback);
+    showToast('🔒 Daily limit reached! Upgrade to PRO for unlimited calculations.', '⚡', 4000);
+  }
+}
+
+// =========================================================
+// Core Calculator Logic & Formatting
+// =========================================================
 function formatNumber(value) {
   if (!Number.isFinite(value)) {
     return 'Error';
@@ -147,16 +387,21 @@ function formatNumber(value) {
 }
 
 function updateDisplay() {
-  display.textContent = currentValue;
+  if (display) {
+    display.textContent = currentValue;
+  }
 
-  if (previousValue !== null && operator) {
-    expression.textContent = `${formatNumber(previousValue)} ${operator}`;
-  } else {
-    expression.textContent = '0';
+  if (expression) {
+    if (previousValue !== null && operator) {
+      expression.textContent = `${formatNumber(previousValue)} ${operator}`;
+    } else {
+      expression.textContent = '0';
+    }
   }
 }
 
 function clearAll() {
+  playKeySound('clear');
   currentValue = '0';
   previousValue = null;
   operator = null;
@@ -165,7 +410,24 @@ function clearAll() {
   updateDisplay();
 }
 
+function deleteLast() {
+  playKeySound('default');
+  if (overwrite || currentValue === 'Error') {
+    currentValue = '0';
+    overwrite = false;
+  } else {
+    currentValue = currentValue.slice(0, -1) || '0';
+  }
+  updateDisplay();
+}
+
 function appendDigit(digit) {
+  playKeySound('default');
+  if (currentValue === 'Error') {
+    currentValue = '0';
+    overwrite = false;
+  }
+
   if (digit === '.' && currentValue.includes('.')) {
     return;
   }
@@ -180,68 +442,23 @@ function appendDigit(digit) {
   updateDisplay();
 }
 
-function deleteLast() {
-  if (overwrite) {
-    currentValue = '0';
-    overwrite = false;
+function toggleSign() {
+  playKeySound('default');
+  if (currentValue === 'Error' || currentValue === '0') return;
+  if (currentValue.startsWith('-')) {
+    currentValue = currentValue.slice(1);
   } else {
-    currentValue = currentValue.slice(0, -1) || '0';
+    currentValue = '-' + currentValue;
   }
-
   updateDisplay();
 }
 
-// Core Verification Gate before computing and showing results
-function checkResultAccess(computeCallback) {
-  if (isPremium) {
-    computeCallback();
-    return;
-  }
-
-  if (usageCount < 1) {
-    // 1st calculation is FREE!
-    computeCallback();
-    usageCount = 1;
-    localStorage.setItem(STORAGE_KEYS.USAGE_COUNT, '1');
-    updateAccountStatusUI();
-    showToast('✨ 1st free calculation completed! Next calculations require $5 PRO.', '💡', 4000);
-  } else {
-    // 2nd calculation onwards: Trigger $5 Binance Pay Paywall Modal
-    openPaywallModal(computeCallback);
-    showToast('🔒 Upgrade to $5 Premium to view calculation results.', '⚡', 3500);
-  }
-}
-
-function applyPercent() {
-  checkResultAccess(() => {
-    const numericValue = Number.parseFloat(currentValue);
-    if (Number.isNaN(numericValue)) {
-      currentValue = 'Error';
-    } else {
-      currentValue = formatNumber(numericValue / 100);
-    }
-    overwrite = true;
-    updateDisplay();
-  });
-}
-
-function applyLog() {
-  checkResultAccess(() => {
-    const numericValue = Number.parseFloat(currentValue);
-    if (Number.isNaN(numericValue) || numericValue <= 0) {
-      currentValue = 'Error';
-    } else {
-      currentValue = formatNumber(Math.log10(numericValue));
-    }
-    overwrite = true;
-    updateDisplay();
-  });
-}
-
 function setOperator(nextOperator) {
+  playKeySound('default');
+  if (currentValue === 'Error') return;
+
   if (operator && !overwrite) {
-    // In chained calculations like 5 + 5 +, we compute the previous operation
-    checkResultAccess(() => {
+    checkCalculationAccess(() => {
       evaluateInternal();
       previousValue = Number.parseFloat(currentValue);
       operator = nextOperator;
@@ -257,6 +474,211 @@ function setOperator(nextOperator) {
   updateDisplay();
 }
 
+function applyPercent() {
+  playKeySound('default');
+  if (currentValue === 'Error') return;
+  checkCalculationAccess(() => {
+    const numericValue = Number.parseFloat(currentValue);
+    if (Number.isNaN(numericValue)) {
+      currentValue = 'Error';
+    } else {
+      currentValue = formatNumber(numericValue / 100);
+      recordHistory(`${numericValue} %`, currentValue);
+    }
+    overwrite = true;
+    updateDisplay();
+  });
+}
+
+// Factorial calculation helper
+function factorial(n) {
+  if (n < 0 || !Number.isInteger(n) || n > 170) return 'Error';
+  if (n === 0 || n === 1) return 1;
+  let result = 1;
+  for (let i = 2; i <= n; i++) result *= i;
+  return result;
+}
+
+// Scientific Single-Operand & Math Suite (PRO only)
+function executeScientificFunction(fnName) {
+  playKeySound('default');
+  if (!isPremium) return;
+
+  const numericValue = Number.parseFloat(currentValue);
+  if (Number.isNaN(numericValue)) {
+    currentValue = 'Error';
+    updateDisplay();
+    return;
+  }
+
+  let result;
+  let exprLabel = `${fnName}(${currentValue})`;
+
+  // Angle conversion for Trig
+  const angleRad = angleMode === 'DEG' ? (numericValue * Math.PI) / 180 : numericValue;
+
+  switch (fnName) {
+    case 'sin':
+      result = Math.sin(angleRad);
+      break;
+    case 'cos':
+      result = Math.cos(angleRad);
+      break;
+    case 'tan':
+      result = Math.tan(angleRad);
+      break;
+    case 'sqrt':
+      exprLabel = `√(${currentValue})`;
+      result = numericValue < 0 ? 'Error' : Math.sqrt(numericValue);
+      break;
+    case 'sq':
+      exprLabel = `(${currentValue})²`;
+      result = numericValue * numericValue;
+      break;
+    case 'log':
+      exprLabel = `log(${currentValue})`;
+      result = numericValue <= 0 ? 'Error' : Math.log10(numericValue);
+      break;
+    case 'ln':
+      exprLabel = `ln(${currentValue})`;
+      result = numericValue <= 0 ? 'Error' : Math.log(numericValue);
+      break;
+    case 'fact':
+      exprLabel = `${currentValue}!`;
+      result = factorial(numericValue);
+      break;
+    case 'inv':
+      exprLabel = `1/(${currentValue})`;
+      result = numericValue === 0 ? 'Error' : 1 / numericValue;
+      break;
+    default:
+      result = numericValue;
+  }
+
+  if (expression) {
+    expression.textContent = exprLabel;
+  }
+
+  const formatted = typeof result === 'string' ? result : formatNumber(result);
+  currentValue = formatted;
+  overwrite = true;
+  updateDisplay();
+
+  if (formatted !== 'Error') {
+    recordHistory(exprLabel, formatted);
+  }
+}
+
+// Insert Constant (π, e)
+function insertConstant(constType) {
+  playKeySound('default');
+  if (!isPremium) return;
+
+  if (constType === 'pi') {
+    currentValue = formatNumber(Math.PI);
+  } else if (constType === 'e') {
+    currentValue = formatNumber(Math.E);
+  }
+  overwrite = true;
+  updateDisplay();
+}
+
+// Memory Functions (MC, MR, M+, M-)
+function handleMemory(fn) {
+  playKeySound('default');
+  if (!isPremium) return;
+
+  const currentNum = Number.parseFloat(currentValue) || 0;
+
+  switch (fn) {
+    case 'mc':
+      memoryValue = 0;
+      showToast('Memory Cleared (MC)', '🧹', 2000);
+      break;
+    case 'mr':
+      currentValue = formatNumber(memoryValue);
+      overwrite = true;
+      updateDisplay();
+      showToast(`Recalled from Memory: ${formatNumber(memoryValue)}`, '💾', 2000);
+      break;
+    case 'm-plus':
+      memoryValue += currentNum;
+      showToast(`Added to Memory: ${formatNumber(memoryValue)}`, '➕', 2000);
+      break;
+    case 'm-minus':
+      memoryValue -= currentNum;
+      showToast(`Subtracted from Memory: ${formatNumber(memoryValue)}`, '➖', 2000);
+      break;
+  }
+
+  updateAccountStatusUI();
+}
+
+// Angle Mode Toggle (DEG / RAD)
+function toggleAngleMode() {
+  playKeySound('default');
+  if (!isPremium) return;
+
+  angleMode = angleMode === 'DEG' ? 'RAD' : 'DEG';
+  localStorage.setItem(STORAGE_KEYS.ANGLE_MODE, angleMode);
+  updateAccountStatusUI();
+  showToast(`Angle Mode set to ${angleMode}`, '📐', 2000);
+}
+
+// Calculation History Logger
+function recordHistory(calcExpr, calcResult) {
+  if (!isPremium || calcResult === 'Error') return;
+
+  const entry = {
+    id: Date.now(),
+    expr: calcExpr,
+    result: calcResult,
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  };
+
+  calculationHistory.unshift(entry);
+  if (calculationHistory.length > 30) calculationHistory.pop();
+
+  localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(calculationHistory));
+  renderHistoryList();
+}
+
+function renderHistoryList() {
+  if (!historyListContainer) return;
+  if (calculationHistory.length === 0) {
+    historyListContainer.innerHTML = '<p class="text-xs text-zinc-500 text-center py-8">No calculations recorded yet.</p>';
+    return;
+  }
+
+  historyListContainer.innerHTML = calculationHistory.map(item => `
+    <div class="bg-[#121418] hover:bg-[#20242c] p-2.5 rounded-xl border border-zinc-800 transition cursor-pointer flex items-center justify-between history-item"
+         data-value="${item.result}">
+      <div>
+        <div class="text-[11px] text-zinc-400 font-mono">${item.expr}</div>
+        <div class="text-sm font-bold text-white font-mono mt-0.5">${item.result}</div>
+      </div>
+      <span class="text-[10px] text-zinc-500">${item.time}</span>
+    </div>
+  `).join('');
+
+  // Attach click to load into display
+  if (typeof historyListContainer.querySelectorAll === 'function') {
+    historyListContainer.querySelectorAll('.history-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const val = item.dataset.value;
+        if (val) {
+          currentValue = val;
+          overwrite = true;
+          updateDisplay();
+          closeHistoryModal();
+          showToast(`Loaded ${val} into calculator`, '📋', 2000);
+        }
+      });
+    });
+  }
+}
+
+// Internal Evaluation Logic
 function evaluateInternal() {
   if (!operator || previousValue === null) {
     return;
@@ -289,7 +711,16 @@ function evaluateInternal() {
         result = right;
     }
 
+    const calcExpr = `${formatNumber(left)} ${operator} ${formatNumber(right)}`;
+    if (expression) {
+      expression.textContent = `${calcExpr} =`;
+    }
+
     currentValue = typeof result === 'string' ? result : formatNumber(result);
+
+    if (currentValue !== 'Error') {
+      recordHistory(calcExpr, currentValue);
+    }
   }
 
   previousValue = null;
@@ -299,53 +730,188 @@ function evaluateInternal() {
 }
 
 function evaluate() {
+  playKeySound('equals');
   if (!operator || previousValue === null) {
     return;
   }
-  checkResultAccess(evaluateInternal);
+  checkCalculationAccess(evaluateInternal);
+}
+
+// Copy Display Result to Clipboard
+function copyDisplayResult() {
+  if (!currentValue || currentValue === 'Error') return;
+  navigator.clipboard.writeText(currentValue).then(() => {
+    showToast(`📋 Copied "${currentValue}" to clipboard!`, '✓', 2500);
+  }).catch(() => {
+    showToast(`Display: ${currentValue}`, '📋', 2500);
+  });
+}
+
+// =========================================================
+// Sound Toggle & Theme Toggle
+// =========================================================
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  localStorage.setItem(STORAGE_KEYS.SOUND_ENABLED, soundEnabled ? 'true' : 'false');
+  if (soundIcon) soundIcon.textContent = soundEnabled ? '🔊' : '🔇';
+  showToast(`Audio FX ${soundEnabled ? 'Enabled' : 'Muted'}`, soundEnabled ? '🔊' : '🔇', 2000);
+}
+
+function initTheme() {
+  const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME);
+  const isDark = savedTheme === 'dark';
+  if (isDark) {
+    document.documentElement.classList.add('dark');
+    document.body.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+    document.body.classList.remove('dark');
+  }
+  if (themeToggle) {
+    themeToggle.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+  }
 }
 
 function toggleTheme() {
-  document.body.classList.toggle('dark');
-  const isDark = document.body.classList.contains('dark');
-  themeToggle.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+  const isDark = !document.documentElement.classList.contains('dark');
+  if (isDark) {
+    document.documentElement.classList.add('dark');
+    document.body.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+    document.body.classList.remove('dark');
+  }
+  localStorage.setItem(STORAGE_KEYS.THEME, isDark ? 'dark' : 'light');
+  if (themeToggle) {
+    themeToggle.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+  }
 }
 
-// Reset Free Trial Helper for Testing
-function resetTrial() {
-  localStorage.removeItem(STORAGE_KEYS.USAGE_COUNT);
-  localStorage.removeItem(STORAGE_KEYS.IS_PREMIUM);
-  usageCount = 0;
-  isPremium = false;
-  pendingCalculation = null;
-  clearAll();
-  updateAccountStatusUI();
-  showToast('🔄 Free trial reset! 1st calculation is free again.', 'ℹ️');
-}
-
-// Interactive Copy Binance Pay Code
+// =========================================================
+// Binance Pay & Copy Code Helper
+// =========================================================
 function copyPayCode() {
   const codeElem = document.getElementById('payCodeText');
   const code = codeElem ? codeElem.textContent.trim() : '512867796';
 
   navigator.clipboard.writeText(code).then(() => {
-    copyBtnLabel.textContent = 'Copied! ✓';
-    copyPayCodeBtn.classList.add('bg-emerald-600', 'text-white');
+    if (copyBtnLabel) copyBtnLabel.textContent = 'Copied! ✓';
+    if (copyPayCodeBtn) copyPayCodeBtn.classList.add('bg-emerald-600', 'text-white');
     showToast(`📋 Binance Pay Code copied: ${code}`, '✓');
 
     setTimeout(() => {
-      copyBtnLabel.textContent = 'Copy';
-      copyPayCodeBtn.classList.remove('bg-emerald-600', 'text-white');
+      if (copyBtnLabel) copyBtnLabel.textContent = 'Copy';
+      if (copyPayCodeBtn) copyPayCodeBtn.classList.remove('bg-emerald-600', 'text-white');
     }, 2000);
   }).catch(() => {
     showToast(`Binance Pay Code: ${code}`, '📋');
   });
 }
 
-// Lightweight Confetti Particle Animation
+// History Modal Controls
+function openHistoryModal() {
+  if (!isPremium) return;
+  renderHistoryList();
+  if (historyModal) {
+    historyModal.classList.remove('modal-hidden');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeHistoryModal() {
+  if (historyModal) {
+    historyModal.classList.add('modal-hidden');
+    document.body.style.overflow = '';
+  }
+}
+
+// =========================================================
+// Support Modal Functions
+// =========================================================
+function openSupportModal() {
+  if (supportModal) {
+    supportModal.classList.remove('modal-hidden');
+    document.body.style.overflow = 'hidden';
+
+    const enteredTx = txIdInput ? txIdInput.value.trim() : '';
+    if (enteredTx && supportMessage && !supportMessage.value) {
+      supportMessage.value = `Hello Support,\n\nI need help verifying my Binance Transaction ID: ${enteredTx}\nPlease verify and help me unlock PRO lifetime access.`;
+    }
+  }
+}
+
+function closeSupportModal() {
+  if (supportModal) {
+    supportModal.classList.add('modal-hidden');
+    if (paywallModal && !paywallModal.classList.contains('modal-hidden')) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+  }
+}
+
+async function handleSupportSubmit(e) {
+  e.preventDefault();
+  const name = supportName ? supportName.value.trim() : '';
+  const email = supportEmail ? supportEmail.value.trim() : '';
+  const subject = supportSubject && supportSubject.value.trim() ? supportSubject.value.trim() : 'Calculator Binance Pay Support Request';
+  const message = supportMessage ? supportMessage.value.trim() : '';
+
+  if (!name || !email || !message) {
+    showToast('⚠️ Please fill in all required fields.', '❗', 3000);
+    return;
+  }
+
+  const sendBtn = document.getElementById('sendSupportMsgBtn');
+  const btnText = document.getElementById('sendSupportBtnText');
+  const targetEmail = 'ashikbsngal@gmail.com';
+
+  if (sendBtn) sendBtn.disabled = true;
+  if (btnText) btnText.textContent = 'Sending Message...';
+
+  try {
+    await fetch(`https://formsubmit.co/ajax/${targetEmail}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        name: name,
+        email: email,
+        _subject: `[Calculator Support] ${subject} from ${name}`,
+        message: message,
+        _captcha: 'false'
+      })
+    });
+
+    closeSupportModal();
+    showToast(`✅ Message sent directly to support! We will reply soon.`, '📩', 5000);
+    if (supportForm) supportForm.reset();
+  } catch {
+    // Fallback to mailto
+    const emailSubject = `[Support] ${subject} - from ${name}`;
+    const emailBody = `Sender Name: ${name}\nSender Email: ${email}\n\nMessage:\n${message}\n\nSent from Calculator Web App`;
+    const mailtoUrl = `mailto:${targetEmail}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+    window.open(mailtoUrl, '_blank');
+
+    closeSupportModal();
+    showToast('✉️ Prepared email draft in your email client!', '📬', 5000);
+    if (supportForm) supportForm.reset();
+  } finally {
+    if (sendBtn) sendBtn.disabled = false;
+    if (btnText) btnText.textContent = 'Send Message to Support';
+  }
+}
+
+// =========================================================
+// Confetti Animation Effect
+// =========================================================
 function launchConfetti() {
-  if (!confettiCanvas) return;
+  if (!confettiCanvas || typeof confettiCanvas.getContext !== 'function') return;
   const ctx = confettiCanvas.getContext('2d');
+  if (!ctx) return;
   confettiCanvas.width = window.innerWidth;
   confettiCanvas.height = window.innerHeight;
 
@@ -368,7 +934,6 @@ function launchConfetti() {
   }
 
   let animationFrame;
-  let alpha = 1;
 
   function render() {
     ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
@@ -403,10 +968,13 @@ function launchConfetti() {
   render();
 }
 
-// Event Listeners - Calculator Keypad
+// =========================================================
+// Keypad & Event Listeners
+// =========================================================
 buttons.forEach((button) => {
   const action = button.dataset.action;
   const value = button.dataset.value;
+  const fn = button.dataset.fn;
 
   if (action === 'clear') {
     button.addEventListener('click', clearAll);
@@ -414,8 +982,18 @@ buttons.forEach((button) => {
     button.addEventListener('click', deleteLast);
   } else if (action === 'percent') {
     button.addEventListener('click', applyPercent);
-  } else if (action === 'log') {
-    button.addEventListener('click', applyLog);
+  } else if (action === 'toggle-sign') {
+    button.addEventListener('click', toggleSign);
+  } else if (action === 'scientific') {
+    if (fn === 'pow') {
+      button.addEventListener('click', () => setOperator('^'));
+    } else if (fn) {
+      button.addEventListener('click', () => executeScientificFunction(fn));
+    }
+  } else if (action === 'constant') {
+    button.addEventListener('click', () => insertConstant(value));
+  } else if (action === 'memory') {
+    button.addEventListener('click', () => handleMemory(fn));
   } else if (action === 'operator') {
     button.addEventListener('click', () => setOperator(value));
   } else if (action === 'equals') {
@@ -425,12 +1003,24 @@ buttons.forEach((button) => {
   }
 });
 
-// Event Listeners - UI Controls
-themeToggle.addEventListener('click', toggleTheme);
+// UI Event Listeners
+if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
+if (soundToggleBtn) soundToggleBtn.addEventListener('click', toggleSound);
+if (historyToggleBtn) historyToggleBtn.addEventListener('click', openHistoryModal);
+if (closeHistoryModalBtn) closeHistoryModalBtn.addEventListener('click', closeHistoryModal);
+if (angleToggleBtn) angleToggleBtn.addEventListener('click', toggleAngleMode);
+if (copyResultBtn) copyResultBtn.addEventListener('click', copyDisplayResult);
 
-if (closeModalBtn) {
-  closeModalBtn.addEventListener('click', closePaywallModal);
+if (clearHistoryBtn) {
+  clearHistoryBtn.addEventListener('click', () => {
+    calculationHistory = [];
+    localStorage.removeItem(STORAGE_KEYS.HISTORY);
+    renderHistoryList();
+    showToast('History cleared', '🧹', 2000);
+  });
 }
+
+if (closeModalBtn) closeModalBtn.addEventListener('click', closePaywallModal);
 
 if (paywallModal) {
   paywallModal.addEventListener('click', (e) => {
@@ -440,9 +1030,15 @@ if (paywallModal) {
   });
 }
 
-if (copyPayCodeBtn) {
-  copyPayCodeBtn.addEventListener('click', copyPayCode);
+if (historyModal) {
+  historyModal.addEventListener('click', (e) => {
+    if (e.target === historyModal) {
+      closeHistoryModal();
+    }
+  });
 }
+
+if (copyPayCodeBtn) copyPayCodeBtn.addEventListener('click', copyPayCode);
 
 if (txIdInput) {
   txIdInput.addEventListener('input', () => {
@@ -466,19 +1062,17 @@ if (verifyPayBtn) {
         txIdInput.classList.remove('border-[#2e333e]');
         txIdInput.focus();
       }
-      showToast('⚠️ Invalid Transaction ID', '❌', 3500);
+      showToast('⚠️ Invalid Binance Transaction ID', '❌', 3500);
       return;
     }
 
-    if (txErrorContainer) {
-      txErrorContainer.classList.add('hidden');
-    }
+    if (txErrorContainer) txErrorContainer.classList.add('hidden');
     if (txIdInput) {
       txIdInput.classList.remove('border-rose-500');
       txIdInput.classList.add('border-[#2e333e]');
     }
 
-    unlockPremium(true);
+    unlockPremium();
   });
 }
 
@@ -486,110 +1080,24 @@ if (premiumTriggerBtn) {
   premiumTriggerBtn.addEventListener('click', () => openPaywallModal(null));
 }
 
+if (quickUnlockBtn) {
+  quickUnlockBtn.addEventListener('click', () => {
+    if (isPremium) {
+      showToast('👑 PRO version is already active!', '✨');
+    } else {
+      openPaywallModal(null);
+    }
+  });
+}
+
 if (resetTrialBtn) {
   resetTrialBtn.addEventListener('click', resetTrial);
 }
 
-// Quick Unlock Button opens the payment modal instead of auto-unlocking
-if (quickUnlockBtn) {
-  quickUnlockBtn.addEventListener('click', () => openPaywallModal(null));
-}
-
-// Support Contact Modal Controls
-function openSupportModal() {
-  if (supportModal) {
-    supportModal.classList.remove('modal-hidden');
-    document.body.style.overflow = 'hidden';
-
-    // Auto-fill entered TxID in support message if user entered one
-    const enteredTx = txIdInput ? txIdInput.value.trim() : '';
-    if (enteredTx && supportMessage && !supportMessage.value) {
-      supportMessage.value = `Hello Support,\n\nI need help verifying my Binance Transaction ID: ${enteredTx}\nPlease verify and help me unlock my access.`;
-    }
-  }
-}
-
-function closeSupportModal() {
-  if (supportModal) {
-    supportModal.classList.add('modal-hidden');
-    // If paywall modal is still open, keep overflow hidden
-    if (paywallModal && !paywallModal.classList.contains('modal-hidden')) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-  }
-}
-
-async function handleSupportSubmit(e) {
-  e.preventDefault();
-  const name = supportName ? supportName.value.trim() : '';
-  const email = supportEmail ? supportEmail.value.trim() : '';
-  const subject = supportSubject && supportSubject.value.trim() ? supportSubject.value.trim() : 'Calculator Binance Pay Support Request';
-  const message = supportMessage ? supportMessage.value.trim() : '';
-
-  if (!name || !email || !message) {
-    showToast('⚠️ Please fill in all required fields.', '❗', 3000);
-    return;
-  }
-
-  const sendBtn = document.getElementById('sendSupportMsgBtn');
-  const btnText = document.getElementById('sendSupportBtnText');
-  const targetEmail = 'ashikbsngal@gmail.com';
-
-  if (sendBtn) sendBtn.disabled = true;
-  if (btnText) btnText.textContent = 'Sending Message...';
-
-  try {
-    // Send directly to ashikbsngal@gmail.com via FormSubmit AJAX API
-    const response = await fetch(`https://formsubmit.co/ajax/${targetEmail}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({
-        name: name,
-        email: email,
-        _subject: `[Calculator Support] ${subject} from ${name}`,
-        message: message,
-        _captcha: 'false'
-      })
-    });
-
-    const data = await response.json();
-    
-    closeSupportModal();
-    showToast(`✅ Message sent directly to ${targetEmail}! We will reply soon.`, '📩', 5000);
-    if (supportForm) supportForm.reset();
-  } catch (err) {
-    // Fallback to mailto if offline or network error
-    const emailSubject = `[Support] ${subject} - from ${name}`;
-    const emailBody = `Sender Name: ${name}\nSender Email: ${email}\n\nMessage:\n${message}\n\nSent from Calculator Web App`;
-    const mailtoUrl = `mailto:${targetEmail}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
-    window.open(mailtoUrl, '_blank');
-
-    closeSupportModal();
-    showToast('✉️ Message prepared in email client! Please click send.', '📬', 5000);
-    if (supportForm) supportForm.reset();
-  } finally {
-    if (sendBtn) sendBtn.disabled = false;
-    if (btnText) btnText.textContent = 'Send Message to Support';
-  }
-}
-
-// Support Modal Event Listeners
-if (openSupportModalBtn) {
-  openSupportModalBtn.addEventListener('click', openSupportModal);
-}
-
-if (openSupportFromErrorBtn) {
-  openSupportFromErrorBtn.addEventListener('click', openSupportModal);
-}
-
-if (closeSupportModalBtn) {
-  closeSupportModalBtn.addEventListener('click', closeSupportModal);
-}
+// Support Modal Listeners
+if (openSupportModalBtn) openSupportModalBtn.addEventListener('click', openSupportModal);
+if (openSupportFromErrorBtn) openSupportFromErrorBtn.addEventListener('click', openSupportModal);
+if (closeSupportModalBtn) closeSupportModalBtn.addEventListener('click', closeSupportModal);
 
 if (supportModal) {
   supportModal.addEventListener('click', (e) => {
@@ -599,11 +1107,45 @@ if (supportModal) {
   });
 }
 
-if (supportForm) {
-  supportForm.addEventListener('submit', handleSupportSubmit);
-}
+if (supportForm) supportForm.addEventListener('submit', handleSupportSubmit);
 
-// Window resize adjust confetti canvas
+// Keyboard Support
+window.addEventListener('keydown', (e) => {
+  if (
+    (paywallModal && !paywallModal.classList.contains('modal-hidden')) ||
+    (historyModal && !historyModal.classList.contains('modal-hidden')) ||
+    (supportModal && !supportModal.classList.contains('modal-hidden')) ||
+    ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)
+  ) {
+    if (e.key === 'Escape') {
+      closePaywallModal();
+      closeHistoryModal();
+      closeSupportModal();
+    }
+    return;
+  }
+
+  if (e.key >= '0' && e.key <= '9') {
+    appendDigit(e.key);
+  } else if (e.key === '.') {
+    appendDigit('.');
+  } else if (e.key === '+' || e.key === '-' || e.key === '*' || e.key === '/') {
+    setOperator(e.key);
+  } else if (e.key === '^' && isPremium) {
+    setOperator('^');
+  } else if (e.key === '%') {
+    applyPercent();
+  } else if (e.key === 'Enter' || e.key === '=') {
+    e.preventDefault();
+    evaluate();
+  } else if (e.key === 'Backspace') {
+    deleteLast();
+  } else if (e.key === 'Escape' || e.key.toLowerCase() === 'c') {
+    clearAll();
+  }
+});
+
+// Window resize handler for confetti canvas
 window.addEventListener('resize', () => {
   if (confettiCanvas) {
     confettiCanvas.width = window.innerWidth;
@@ -612,7 +1154,7 @@ window.addEventListener('resize', () => {
 });
 
 // Initialization
+initTheme();
 updateAccountStatusUI();
 updateDisplay();
-
-
+renderHistoryList();
