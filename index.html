@@ -4,129 +4,170 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Calculator</title>
+  <title>Minimal & Scientific Pro Calculator</title>
+  <meta name="description"
+    content="A powerful, beautifully designed modern web calculator with free unlimited basic calculations and scientific pro suite." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
-      darkMode: 'class'
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
     }
   </script>
   <style>
     :root {
       color-scheme: light;
-      --bg: #f1f5f9;
-      --panel: #ffffff;
+      --bg: #f4f6fb;
+      --bg-gradient: radial-gradient(circle at 50% 0%, #ffffff 0%, #eef2f8 100%);
+      --panel: rgba(255, 255, 255, 0.88);
+      --panel-border: rgba(226, 232, 240, 0.9);
       --panel-2: #f8fafc;
       --text: #0f172a;
       --muted: #64748b;
       --button: #ffffff;
       --button-hover: #f1f5f9;
-      --button-strong: #1e293b;
-      --button-strong-hover: #0f172a;
-      --border: #e2e8f0;
+      --button-border: #e2e8f0;
+      --button-strong: #0f172a;
+      --button-strong-hover: #1e293b;
       --accent: #f59e0b;
-      --pro-gold: #f59e0b;
+      --accent-glow: rgba(245, 158, 11, 0.2);
     }
 
-    html.dark, body.dark {
+    html.dark,
+    body.dark {
       color-scheme: dark;
-      --bg: #0b0f17;
-      --panel: #151b26;
-      --panel-2: #0e121a;
+      --bg: #07090e;
+      --bg-gradient: radial-gradient(circle at 50% 0%, #111726 0%, #06080d 100%);
+      --panel: rgba(17, 24, 39, 0.78);
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --panel-2: rgba(10, 14, 23, 0.85);
       --text: #f8fafc;
       --muted: #94a3b8;
-      --button: #1e2636;
-      --button-hover: #2a3447;
-      --button-strong: #334155;
-      --button-strong-hover: #475569;
-      --border: #242d3d;
+      --button: rgba(30, 41, 59, 0.7);
+      --button-hover: rgba(51, 65, 85, 0.9);
+      --button-border: rgba(255, 255, 255, 0.08);
+      --button-strong: #f8fafc;
+      --button-strong-hover: #e2e8f0;
       --accent: #f0b90b;
-      --pro-gold: #f0b90b;
+      --accent-glow: rgba(240, 185, 11, 0.25);
     }
 
     body {
-      background-color: var(--bg);
+      background: var(--bg);
+      background-image: var(--bg-gradient);
+      background-attachment: fixed;
       color: var(--text);
-      transition: background-color 0.25s ease, color 0.25s ease;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
 
-    h1, h2, h3, h4, h5, h6 {
-      color: var(--text);
+    .glass-shell {
+      background: var(--panel);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.4);
     }
 
-    .calc-shell {
-      background-color: var(--panel);
-      border: 1px solid var(--border);
-      box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.07), 0 0 0 1px rgba(15, 23, 42, 0.03);
+    body.dark .glass-shell {
+      box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.06), 0 0 40px -10px var(--accent-glow);
     }
 
-    body.dark .calc-shell {
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    .screen-glass {
+      background: var(--panel-2);
+      border: 1px solid var(--panel-border);
+      backdrop-filter: blur(12px);
     }
 
-    .screen {
-      background-color: var(--panel-2);
-      border: 1px solid var(--border);
-    }
-
-    .btn {
+    .calc-btn {
       background-color: var(--button);
       color: var(--text);
-      border: 1px solid var(--border);
-      transition: all 0.15s ease;
+      border: 1px solid var(--button-border);
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
     }
 
-    .btn:hover {
+    .calc-btn:hover {
       background-color: var(--button-hover);
-      border-color: #cbd5e1;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
 
-    body.dark .btn:hover {
-      background-color: var(--button-hover);
-      border-color: #3b465c;
+    .calc-btn:active {
+      transform: translateY(1px) scale(0.96);
     }
 
-    .btn-strong {
-      background-color: var(--button-strong);
+    .calc-btn-strong {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
       color: #ffffff;
-      border: 1px solid var(--border);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body.dark .calc-btn-strong {
+      background: linear-gradient(135deg, #2a374a, #1a2332);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .calc-btn-strong:hover {
+      background: linear-gradient(135deg, #334155, #1e293b);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+    }
+
+    .calc-btn-strong:active {
+      transform: translateY(1px) scale(0.96);
+    }
+
+    .calc-btn-accent {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35);
+    }
+
+    .calc-btn-accent:hover {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45);
+      transform: translateY(-1px);
+    }
+
+    .calc-btn-accent:active {
+      transform: translateY(1px) scale(0.96);
+    }
+
+    .link-pill {
+      background: var(--panel);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--panel-border);
       transition: all 0.15s ease;
     }
 
-    .btn-strong:hover {
-      background-color: var(--button-strong-hover);
+    .link-pill:hover {
+      background: var(--button-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
     }
 
-    .muted {
-      color: var(--muted);
-    }
-
-    .link-btn {
-      background-color: var(--panel);
-      color: var(--text);
-      border: 1px solid var(--border);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-      transition: all 0.15s ease;
-    }
-
-    .link-btn:hover {
-      background-color: var(--button-hover);
-      border-color: #cbd5e1;
-    }
-
-    body.dark .link-btn:hover {
-      background-color: var(--button-hover);
-      border-color: #3b465c;
-    }
-
-    /* Modal animation */
+    /* Modal Animation */
     .modal-backdrop {
-      transition: opacity 0.3s ease, visibility 0.3s ease;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
     }
 
     .modal-content {
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.28s ease;
     }
 
     .modal-hidden {
@@ -136,28 +177,28 @@
     }
 
     .modal-hidden .modal-content {
-      transform: scale(0.92) translateY(10px);
+      transform: scale(0.94) translateY(12px);
       opacity: 0;
     }
 
-    /* Binance styling */
-    .binance-gold {
-      color: #f0b90b;
+    /* Pro Transition */
+    .pro-scientific-enter {
+      animation: expandPro 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    .bg-binance-gold {
-      background-color: #f0b90b;
+    @keyframes expandPro {
+      from {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.98);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
     }
 
-    .border-binance-gold {
-      border-color: #f0b90b;
-    }
-
-    .shadow-binance {
-      box-shadow: 0 10px 25px -5px rgba(240, 185, 11, 0.25);
-    }
-
-    /* Custom scrollbars */
+    /* Custom Scrollbar */
     .custom-scroll::-webkit-scrollbar {
       width: 5px;
     }
@@ -167,147 +208,134 @@
     }
 
     .custom-scroll::-webkit-scrollbar-thumb {
-      background: #4b5563;
+      background: #475569;
       border-radius: 9999px;
-    }
-
-    /* Slide transition for PRO scientific section */
-    .pro-scientific-enter {
-      animation: expandPro 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-
-    @keyframes expandPro {
-      from {
-        opacity: 0;
-        transform: translateY(-8px) scale(0.98);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
     }
   </style>
 </head>
 
-<body class="min-h-screen relative flex flex-col justify-between">
-  <!-- Toast Notification Container -->
+<body class="min-h-screen relative flex flex-col justify-between selection:bg-amber-500/30">
+  <!-- Toast Notification -->
   <div id="toast"
-    class="fixed top-5 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 transform -translate-y-12 opacity-0 pointer-events-none px-4 py-2.5 rounded-full text-sm font-medium shadow-2xl flex items-center gap-2 bg-zinc-900 text-white border border-zinc-700">
-    <span id="toastIcon">✨</span>
+    class="fixed top-5 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 transform -translate-y-12 opacity-0 pointer-events-none px-5 py-2.5 rounded-full text-sm font-medium shadow-2xl flex items-center gap-2.5 bg-zinc-900/95 text-white border border-zinc-700/80 backdrop-blur-lg">
+    <span id="toastIcon" class="text-base">✨</span>
     <span id="toastMsg">Notification message</span>
   </div>
 
-  <!-- Main Calculator Page -->
+  <!-- Main Calculator Content Container -->
   <main class="flex-grow flex items-center justify-center px-3 py-6 sm:px-6">
     <div id="calcContainer" class="w-full max-w-sm sm:max-w-md transition-all duration-300">
 
-      <!-- Clean Minimal Header -->
-      <div class="mb-4 flex items-center justify-between gap-3">
-        <!-- Title & Status Badge -->
-        <div class="flex items-center gap-2.5 min-w-0">
-          <h1 class="text-xl sm:text-2xl font-bold tracking-tight whitespace-nowrap">
-            Calculator
-          </h1>
-          <span id="userStatusBadge"
-            class="inline-flex items-center gap-1.5 text-xs px-2.5 py-0.5 rounded-full font-medium whitespace-nowrap bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 transition-all">
-            <span id="badgeDot" class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
-            <span id="badgeText">1 Free Use Left</span>
-          </span>
-        </div>
+      <!-- Top Header: Brand Title & Utility Buttons -->
+      <div class="mb-2.5 flex items-center justify-between gap-2">
+        <h1
+          class="text-2xl sm:text-3xl font-extrabold tracking-tight whitespace-nowrap bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-600 dark:from-white dark:via-zinc-200 dark:to-zinc-400 bg-clip-text text-transparent">
+          Calculator
+        </h1>
 
         <!-- Header Action Controls -->
         <div class="flex items-center gap-1.5 shrink-0">
-          <!-- PRO Exclusive Tools (Audio & History) -->
+          <!-- Audio Feedback Toggle (PRO Exclusive) -->
           <button id="soundToggleBtn" type="button"
-            class="hidden link-btn rounded-full border w-8 h-8 flex items-center justify-center text-xs font-medium cursor-pointer"
-            title="Toggle Audio Feedback">
+            class="hidden link-pill rounded-full border w-8 h-8 flex items-center justify-center text-xs font-medium cursor-pointer"
+            title="Toggle Audio Click Feedback">
             <span id="soundIcon">🔊</span>
           </button>
 
+          <!-- History Drawer Button (PRO Exclusive) -->
           <button id="historyToggleBtn" type="button"
-            class="hidden link-btn rounded-full border px-3 py-1 text-xs font-medium cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+            class="hidden link-pill rounded-full border px-2.5 py-1 text-xs font-medium cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
             title="View Calculation History">
             <span>📜</span>
             <span class="hidden sm:inline">History</span>
           </button>
 
-          <!-- Free Tier PRO Upgrade Button -->
-          <button id="premiumTriggerBtn" type="button"
-            class="hidden text-xs font-semibold px-3 py-1 rounded-full bg-[#f0b90b]/15 text-amber-800 dark:text-[#f0b90b] border border-[#f0b90b]/40 hover:bg-[#f0b90b]/25 transition flex items-center gap-1 cursor-pointer whitespace-nowrap shadow-sm">
-            ⚡ <span>$5 PRO</span>
-          </button>
-
           <!-- Theme Toggle -->
           <button id="themeToggle" type="button"
-            class="link-btn rounded-full border px-3.5 py-1.5 text-xs font-medium cursor-pointer whitespace-nowrap">
+            class="link-pill rounded-full border px-3 py-1.5 text-xs font-medium cursor-pointer whitespace-nowrap">
             Dark Mode
           </button>
         </div>
       </div>
 
-      <!-- Calculator Shell -->
-      <div class="calc-shell rounded-[2rem] border p-4 sm:p-5 shadow-2xl transition-all">
+      <!-- Plan Status & Action Strip -->
+      <div class="mb-3 flex items-center justify-between gap-2 px-0.5">
+        <!-- Status Badge -->
+        <span id="userStatusBadge"
+          class="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full font-semibold whitespace-nowrap bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/30 transition-all shadow-sm">
+          <span id="badgeDot" class="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0"></span>
+          <span id="badgeText">Free Plan</span>
+        </span>
 
-        <!-- Screen Display with Copy Action & Memory Indicator -->
-        <div class="screen mb-3 rounded-2xl p-4 transition-all relative group">
+        <!-- PRO $5 Upgrade Trigger -->
+        <button id="premiumTriggerBtn" type="button"
+          class="text-xs font-semibold px-3 py-1 rounded-full bg-[#f0b90b]/15 text-amber-800 dark:text-[#f0b90b] border border-[#f0b90b]/40 hover:bg-[#f0b90b]/25 transition flex items-center gap-1 cursor-pointer whitespace-nowrap shadow-sm active:scale-95">
+          ⚡ <span>Upgrade PRO ($5)</span>
+        </button>
+      </div>
 
-          <!-- Top Metadata Bar: Angle Mode, Memory Flag & Copy Button -->
-          <div class="flex items-center justify-between text-xs muted mb-1 min-h-5">
+      <!-- Calculator Main Glass Shell -->
+      <div class="glass-shell rounded-[2rem] p-4 sm:p-5 shadow-2xl transition-all">
+
+        <!-- Display Screen -->
+        <div class="screen-glass mb-3 rounded-2xl p-4 transition-all relative group">
+          <!-- Top Metadata Bar -->
+          <div
+            class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1 min-h-5 font-mono">
             <div class="flex items-center gap-2">
               <span id="memoryIndicator"
-                class="hidden text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-500 border border-amber-500/30">M</span>
+                class="hidden text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">M</span>
               <span id="angleModeDisplay"
-                class="hidden text-[10px] font-semibold uppercase tracking-wider text-zinc-400">DEG</span>
+                class="hidden text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">DEG</span>
             </div>
 
             <div class="flex items-center gap-2">
               <div id="expression"
-                class="text-right text-xs sm:text-sm muted overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px] sm:max-w-[260px]">
+                class="text-right text-xs sm:text-sm text-slate-500 dark:text-slate-400 overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px] sm:max-w-[260px]">
                 0
               </div>
               <button id="copyResultBtn" type="button"
-                class="opacity-60 hover:opacity-100 transition text-[11px] p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10"
+                class="opacity-60 hover:opacity-100 transition text-[11px] p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer"
                 title="Copy Display Value">
                 📋
               </button>
             </div>
           </div>
 
-          <!-- Main Big Display -->
+          <!-- Main Value Display -->
           <div id="display"
-            class="min-h-12 break-all text-right text-4xl font-semibold sm:text-5xl tracking-tight select-all">
+            class="min-h-12 break-all text-right text-4xl sm:text-5xl font-bold tracking-tight select-all font-mono text-slate-900 dark:text-white">
             0
           </div>
         </div>
 
         <!-- ========================================== -->
-        <!-- PRO ONLY: SCIENTIFIC SUITE & MEMORY ROW    -->
-        <!-- (HIDDEN COMPLETELY ON FREE TIER)           -->
+        <!-- PRO SUITE: SCIENTIFIC FUNCTIONS & MEMORY   -->
+        <!-- (UNLOCKED STRICTLY WITH $5 PRO PLAN)       -->
         <!-- ========================================== -->
         <div id="proScientificSection" class="hidden pro-scientific-enter mb-3 space-y-2">
 
           <!-- Memory Bar & Angle Toggle (DEG / RAD) -->
           <div
-            class="flex items-center justify-between bg-slate-100 dark:bg-slate-800/40 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700/60">
+            class="flex items-center justify-between bg-slate-200/60 dark:bg-slate-800/50 p-1.5 rounded-xl border border-slate-300/60 dark:border-slate-700/60 backdrop-blur-sm">
             <div class="grid grid-cols-4 gap-1 w-2/3">
               <button
-                class="btn rounded-lg py-1 px-1.5 text-[11px] font-medium transition active:scale-95 text-center shadow-sm"
+                class="calc-btn rounded-lg py-1 px-1 text-[11px] font-semibold transition active:scale-95 text-center shadow-sm cursor-pointer"
                 data-action="memory" data-fn="mc" title="Memory Clear">MC</button>
               <button
-                class="btn rounded-lg py-1 px-1.5 text-[11px] font-medium transition active:scale-95 text-center shadow-sm"
+                class="calc-btn rounded-lg py-1 px-1 text-[11px] font-semibold transition active:scale-95 text-center shadow-sm cursor-pointer"
                 data-action="memory" data-fn="mr" title="Memory Recall">MR</button>
               <button
-                class="btn rounded-lg py-1 px-1.5 text-[11px] font-medium transition active:scale-95 text-center shadow-sm"
+                class="calc-btn rounded-lg py-1 px-1 text-[11px] font-semibold transition active:scale-95 text-center shadow-sm cursor-pointer"
                 data-action="memory" data-fn="m-plus" title="Memory Add (M+)">M+</button>
               <button
-                class="btn rounded-lg py-1 px-1.5 text-[11px] font-medium transition active:scale-95 text-center shadow-sm"
+                class="calc-btn rounded-lg py-1 px-1 text-[11px] font-semibold transition active:scale-95 text-center shadow-sm cursor-pointer"
                 data-action="memory" data-fn="m-minus" title="Memory Subtract (M-)">M-</button>
             </div>
 
             <div class="flex items-center gap-1">
               <button id="angleToggleBtn" type="button"
-                class="btn rounded-lg py-1 px-2.5 text-[11px] font-bold transition active:scale-95 text-amber-700 dark:text-[#f0b90b] border border-amber-500/30 shadow-sm"
+                class="calc-btn rounded-lg py-1 px-2.5 text-[11px] font-bold transition active:scale-95 text-amber-700 dark:text-[#f0b90b] border border-amber-500/30 shadow-sm cursor-pointer"
                 title="Toggle DEG / RAD angle mode">
                 DEG
               </button>
@@ -315,146 +343,132 @@
           </div>
 
           <!-- Scientific Functions Grid (Row 1: Trig & Logs) -->
-          <div class="grid grid-cols-6 gap-1.5">
+          <div class="grid grid-cols-6 gap-1.5 font-mono text-xs">
             <button
-              class="btn rounded-xl border py-2 px-1 text-xs font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm"
+              class="calc-btn rounded-xl py-2 px-1 font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm cursor-pointer"
               data-action="scientific" data-fn="sin" title="Sine">sin</button>
             <button
-              class="btn rounded-xl border py-2 px-1 text-xs font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm"
+              class="calc-btn rounded-xl py-2 px-1 font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm cursor-pointer"
               data-action="scientific" data-fn="cos" title="Cosine">cos</button>
             <button
-              class="btn rounded-xl border py-2 px-1 text-xs font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm"
+              class="calc-btn rounded-xl py-2 px-1 font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm cursor-pointer"
               data-action="scientific" data-fn="tan" title="Tangent">tan</button>
             <button
-              class="btn rounded-xl border py-2 px-1 text-xs font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm"
+              class="calc-btn rounded-xl py-2 px-1 font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm cursor-pointer"
               data-action="scientific" data-fn="log" title="Logarithm (base 10)">log</button>
             <button
-              class="btn rounded-xl border py-2 px-1 text-xs font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm"
+              class="calc-btn rounded-xl py-2 px-1 font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm cursor-pointer"
               data-action="scientific" data-fn="ln" title="Natural Logarithm (ln)">ln</button>
             <button
-              class="btn rounded-xl border py-2 px-1 text-xs font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm font-serif"
+              class="calc-btn rounded-xl py-2 px-1 font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm font-serif cursor-pointer"
               data-action="constant" data-value="pi" title="Pi Constant (π)">π</button>
           </div>
 
           <!-- Scientific Functions Grid (Row 2: Powers, Roots & Math) -->
-          <div class="grid grid-cols-6 gap-1.5">
+          <div class="grid grid-cols-6 gap-1.5 font-mono text-xs">
             <button
-              class="btn rounded-xl border py-2 px-1 text-xs font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm"
+              class="calc-btn rounded-xl py-2 px-1 font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm cursor-pointer"
               data-action="scientific" data-fn="sqrt" title="Square Root (√)">√</button>
             <button
-              class="btn rounded-xl border py-2 px-1 text-xs font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm"
+              class="calc-btn rounded-xl py-2 px-1 font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm cursor-pointer"
               data-action="scientific" data-fn="sq" title="Square (x²)">x²</button>
             <button
-              class="btn rounded-xl border py-2 px-1 text-xs font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm"
+              class="calc-btn rounded-xl py-2 px-1 font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm cursor-pointer"
               data-action="scientific" data-fn="pow" data-value="^" title="Power (xʸ)">xʸ</button>
             <button
-              class="btn rounded-xl border py-2 px-1 text-xs font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm"
+              class="calc-btn rounded-xl py-2 px-1 font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm cursor-pointer"
               data-action="scientific" data-fn="fact" title="Factorial (n!)">n!</button>
             <button
-              class="btn rounded-xl border py-2 px-1 text-xs font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm"
+              class="calc-btn rounded-xl py-2 px-1 font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm cursor-pointer"
               data-action="scientific" data-fn="inv" title="Inverse (1/x)">1/x</button>
             <button
-              class="btn rounded-xl border py-2 px-1 text-xs font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm font-serif"
+              class="calc-btn rounded-xl py-2 px-1 font-medium transition active:scale-95 flex flex-col items-center justify-center shadow-sm font-serif cursor-pointer"
               data-action="constant" data-value="e" title="Euler Constant (e)">e</button>
           </div>
         </div>
 
-        <!-- Main Standard Calculator Keypad Grid (4 Columns) -->
-        <div class="grid grid-cols-4 gap-2 sm:gap-2.5">
+        <!-- Standard Calculator Keypad Grid (4 Columns) -->
+        <div class="grid grid-cols-4 gap-2 sm:gap-2.5 font-mono">
           <button
-            class="btn rounded-2xl border p-3.5 sm:p-4 text-base sm:text-lg font-medium transition active:scale-95 shadow-sm cursor-pointer"
+            class="calc-btn rounded-2xl p-3.5 sm:p-4 text-base sm:text-lg font-bold text-rose-600 dark:text-rose-400 shadow-sm cursor-pointer"
             data-action="clear">AC</button>
           <button
-            class="btn rounded-2xl border p-3.5 sm:p-4 text-base sm:text-lg font-medium transition active:scale-95 shadow-sm cursor-pointer"
+            class="calc-btn rounded-2xl p-3.5 sm:p-4 text-base sm:text-lg font-bold text-slate-700 dark:text-slate-300 shadow-sm cursor-pointer"
             data-action="delete">DEL</button>
           <button
-            class="btn rounded-2xl border p-3.5 sm:p-4 text-base sm:text-lg font-medium transition active:scale-95 shadow-sm cursor-pointer"
+            class="calc-btn rounded-2xl p-3.5 sm:p-4 text-base sm:text-lg font-bold text-amber-600 dark:text-amber-400 shadow-sm cursor-pointer"
             data-action="percent">%</button>
           <button
-            class="btn-strong rounded-2xl border p-3.5 sm:p-4 text-base sm:text-lg font-medium transition active:scale-95 shadow-sm cursor-pointer"
+            class="calc-btn-strong rounded-2xl p-3.5 sm:p-4 text-lg sm:text-xl font-bold shadow-sm cursor-pointer text-amber-500 dark:text-amber-400"
             data-action="operator" data-value="/">÷</button>
 
-          <button
-            class="btn rounded-2xl border p-3.5 sm:p-4 text-base sm:text-lg font-medium transition active:scale-95 shadow-sm cursor-pointer"
+          <button class="calc-btn rounded-2xl p-3.5 sm:p-4 text-lg sm:text-xl font-semibold shadow-sm cursor-pointer"
             data-value="7">7</button>
-          <button
-            class="btn rounded-2xl border p-3.5 sm:p-4 text-base sm:text-lg font-medium transition active:scale-95 shadow-sm cursor-pointer"
+          <button class="calc-btn rounded-2xl p-3.5 sm:p-4 text-lg sm:text-xl font-semibold shadow-sm cursor-pointer"
             data-value="8">8</button>
-          <button
-            class="btn rounded-2xl border p-3.5 sm:p-4 text-base sm:text-lg font-medium transition active:scale-95 shadow-sm cursor-pointer"
+          <button class="calc-btn rounded-2xl p-3.5 sm:p-4 text-lg sm:text-xl font-semibold shadow-sm cursor-pointer"
             data-value="9">9</button>
           <button
-            class="btn-strong rounded-2xl border p-3.5 sm:p-4 text-base sm:text-lg font-medium transition active:scale-95 shadow-sm cursor-pointer"
+            class="calc-btn-strong rounded-2xl p-3.5 sm:p-4 text-lg sm:text-xl font-bold shadow-sm cursor-pointer text-amber-500 dark:text-amber-400"
             data-action="operator" data-value="*">×</button>
 
-          <button
-            class="btn rounded-2xl border p-3.5 sm:p-4 text-base sm:text-lg font-medium transition active:scale-95 shadow-sm cursor-pointer"
+          <button class="calc-btn rounded-2xl p-3.5 sm:p-4 text-lg sm:text-xl font-semibold shadow-sm cursor-pointer"
             data-value="4">4</button>
-          <button
-            class="btn rounded-2xl border p-3.5 sm:p-4 text-base sm:text-lg font-medium transition active:scale-95 shadow-sm cursor-pointer"
+          <button class="calc-btn rounded-2xl p-3.5 sm:p-4 text-lg sm:text-xl font-semibold shadow-sm cursor-pointer"
             data-value="5">5</button>
-          <button
-            class="btn rounded-2xl border p-3.5 sm:p-4 text-base sm:text-lg font-medium transition active:scale-95 shadow-sm cursor-pointer"
+          <button class="calc-btn rounded-2xl p-3.5 sm:p-4 text-lg sm:text-xl font-semibold shadow-sm cursor-pointer"
             data-value="6">6</button>
           <button
-            class="btn-strong rounded-2xl border p-3.5 sm:p-4 text-base sm:text-lg font-medium transition active:scale-95 shadow-sm cursor-pointer"
+            class="calc-btn-strong rounded-2xl p-3.5 sm:p-4 text-lg sm:text-xl font-bold shadow-sm cursor-pointer text-amber-500 dark:text-amber-400"
             data-action="operator" data-value="-">–</button>
 
-          <button
-            class="btn rounded-2xl border p-3.5 sm:p-4 text-base sm:text-lg font-medium transition active:scale-95 shadow-sm cursor-pointer"
+          <button class="calc-btn rounded-2xl p-3.5 sm:p-4 text-lg sm:text-xl font-semibold shadow-sm cursor-pointer"
             data-value="1">1</button>
-          <button
-            class="btn rounded-2xl border p-3.5 sm:p-4 text-base sm:text-lg font-medium transition active:scale-95 shadow-sm cursor-pointer"
+          <button class="calc-btn rounded-2xl p-3.5 sm:p-4 text-lg sm:text-xl font-semibold shadow-sm cursor-pointer"
             data-value="2">2</button>
-          <button
-            class="btn rounded-2xl border p-3.5 sm:p-4 text-base sm:text-lg font-medium transition active:scale-95 shadow-sm cursor-pointer"
+          <button class="calc-btn rounded-2xl p-3.5 sm:p-4 text-lg sm:text-xl font-semibold shadow-sm cursor-pointer"
             data-value="3">3</button>
           <button
-            class="btn-strong rounded-2xl border p-3.5 sm:p-4 text-base sm:text-lg font-medium transition active:scale-95 shadow-sm cursor-pointer"
+            class="calc-btn-strong rounded-2xl p-3.5 sm:p-4 text-lg sm:text-xl font-bold shadow-sm cursor-pointer text-amber-500 dark:text-amber-400"
             data-action="operator" data-value="+">+</button>
 
-          <button
-            class="btn rounded-2xl border p-3.5 sm:p-4 text-base sm:text-lg font-medium transition active:scale-95 shadow-sm cursor-pointer"
+          <button class="calc-btn rounded-2xl p-3.5 sm:p-4 text-base sm:text-lg font-bold shadow-sm cursor-pointer"
             data-action="toggle-sign">±</button>
-          <button
-            class="btn rounded-2xl border p-3.5 sm:p-4 text-base sm:text-lg font-medium transition active:scale-95 shadow-sm cursor-pointer"
+          <button class="calc-btn rounded-2xl p-3.5 sm:p-4 text-lg sm:text-xl font-semibold shadow-sm cursor-pointer"
             data-value="0">0</button>
-          <button
-            class="btn rounded-2xl border p-3.5 sm:p-4 text-base sm:text-lg font-medium transition active:scale-95 shadow-sm cursor-pointer"
+          <button class="calc-btn rounded-2xl p-3.5 sm:p-4 text-lg sm:text-xl font-bold shadow-sm cursor-pointer"
             data-value=".">.</button>
           <button
-            class="btn-strong rounded-2xl border p-3.5 sm:p-4 text-base sm:text-lg font-bold transition active:scale-95 shadow-sm bg-amber-500 hover:bg-amber-600 text-white cursor-pointer"
+            class="calc-btn-accent rounded-2xl p-3.5 sm:p-4 text-xl sm:text-2xl font-extrabold shadow-lg cursor-pointer"
             data-action="equals">=</button>
         </div>
       </div>
 
-      <!-- Footer Info & Action Links -->
-      <div class="mt-5 flex flex-col items-center gap-3">
-
-        <!-- App Reset & Quick Upgrade Options -->
-        <div class="flex items-center gap-2">
+      <!-- Footer Actions & Controls -->
+      <div class="mt-4 flex flex-col items-center gap-3 font-sans">
+        <div class="flex items-center gap-2 flex-wrap justify-center">
           <button id="resetTrialBtn" type="button"
-            class="link-btn rounded-full border px-3.5 py-1.5 text-xs font-medium transition hover:opacity-80 flex items-center gap-1.5 cursor-pointer shadow-sm"
-            title="Reset App / Trial back to Free Plan">
+            class="link-pill rounded-full px-3.5 py-1.5 text-xs font-medium transition flex items-center gap-1.5 cursor-pointer shadow-sm text-slate-600 dark:text-slate-300"
+            title="Reset to Free Plan">
             <span>🔄</span>
-            <span>Reset App / Trial</span>
+            <span>Reset to Free Plan</span>
           </button>
 
           <button id="quickUnlockBtn" type="button"
-            class="link-btn rounded-full border px-3.5 py-1.5 text-xs font-semibold text-[#f0b90b] border-[#f0b90b]/40 hover:bg-[#f0b90b]/10 transition flex items-center gap-1 cursor-pointer shadow-sm">
+            class="link-pill rounded-full px-3.5 py-1.5 text-xs font-semibold text-amber-600 dark:text-[#f0b90b] border-amber-500/40 hover:bg-amber-500/10 transition flex items-center gap-1 cursor-pointer shadow-sm">
             <span>⚡</span>
-            <span>Upgrade PRO</span>
+            <span>Upgrade PRO ($5)</span>
           </button>
         </div>
 
         <!-- External Author Links -->
         <div class="flex justify-center gap-3">
           <a href="https://github.com/FatihForge" target="_blank" rel="noreferrer"
-            class="link-btn rounded-full border px-4 py-1.5 text-xs font-medium transition hover:opacity-80">
+            class="link-pill rounded-full px-4 py-1.5 text-xs font-medium transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
             GitHub Repo
           </a>
-          <a href="https://fatihforge.pages.dev/#work" target="_blank" rel="noreferrer"
-            class="link-btn rounded-full border px-4 py-1.5 text-xs font-medium transition hover:opacity-80">
+          <a href="https://fatihforge.pages.dev/projects" target="_blank" rel="noreferrer"
+            class="link-pill rounded-full px-4 py-1.5 text-xs font-medium transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
             Other Projects
           </a>
         </div>
@@ -463,12 +477,12 @@
   </main>
 
   <!-- ========================================== -->
-  <!-- PRO ONLY: CALCULATION HISTORY DRAWER MODAL -->
+  <!-- CALCULATION HISTORY DRAWER MODAL           -->
   <!-- ========================================== -->
   <div id="historyModal"
-    class="modal-backdrop modal-hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
+    class="modal-backdrop modal-hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto font-sans">
     <div
-      class="modal-content relative w-full max-w-md bg-[#181a20] text-zinc-100 rounded-3xl border border-[#2b2f36] shadow-2xl p-6 sm:p-7 my-auto max-h-[85vh] flex flex-col">
+      class="modal-content relative w-full max-w-md bg-[#161a22] text-zinc-100 rounded-3xl border border-[#2b3342] shadow-2xl p-6 sm:p-7 my-auto max-h-[85vh] flex flex-col">
 
       <!-- Close Button -->
       <button id="closeHistoryModalBtn"
@@ -490,13 +504,12 @@
 
       <div id="historyListContainer"
         class="flex-grow overflow-y-auto custom-scroll space-y-2 pr-1 min-h-[160px] max-h-[360px]">
-        <!-- Populated via script.js -->
         <p class="text-xs text-zinc-500 text-center py-8">No calculations recorded yet.</p>
       </div>
 
-      <div class="mt-4 pt-3 border-t border-zinc-800 flex items-center justify-between">
+      <div class="mt-4 pt-3 border-t border-zinc-800 flex items-center justify-between text-xs">
         <button id="clearHistoryBtn" type="button"
-          class="text-xs text-rose-400 hover:text-rose-300 font-medium transition cursor-pointer">
+          class="text-rose-400 hover:text-rose-300 font-medium transition cursor-pointer">
           Clear History
         </button>
         <span class="text-[11px] text-zinc-500">Tap item to load into calculator</span>
@@ -505,12 +518,12 @@
   </div>
 
   <!-- ========================================== -->
-  <!-- BINANCE PAY PREMIUM MODAL                  -->
+  <!-- BINANCE PAY PRO LIFETIME UPGRADE MODAL     -->
   <!-- ========================================== -->
   <div id="paywallModal"
-    class="modal-backdrop modal-hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
+    class="modal-backdrop modal-hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto font-sans">
     <div
-      class="modal-content relative w-full max-w-md bg-[#181a20] text-zinc-100 rounded-3xl border border-[#2b2f36] shadow-2xl p-6 sm:p-7 my-auto max-h-[92vh] overflow-y-auto custom-scroll">
+      class="modal-content relative w-full max-w-md bg-[#161a22] text-zinc-100 rounded-3xl border border-[#2b3342] shadow-2xl p-6 sm:p-7 my-auto max-h-[92vh] overflow-y-auto custom-scroll">
 
       <!-- Close Button -->
       <button id="closeModalBtn"
@@ -533,24 +546,23 @@
           Upgrade</span>
       </div>
 
-      <!-- Title & Limit Notice -->
+      <!-- Title & Info -->
       <div class="mb-4">
         <h2 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
           Unlock PRO Lifetime Access
         </h2>
         <p class="text-xs text-zinc-400 mt-1 leading-relaxed">
-          Free tier limit is <strong>1 calculation per day</strong>. Upgrade to <strong>PRO Lifetime ($5)</strong> to
-          unlock the <strong>Full Scientific Calculator Suite</strong>, unlimited calculations, history logs & audio
-          effects!
+          Standard Calculator is <strong>100% free</strong>. Upgrade to <strong>PRO Lifetime ($5)</strong> to unlock the
+          <strong>Full Scientific Calculator Suite</strong>, memory keys, calculation history logs & tactile sound FX!
         </p>
       </div>
 
       <!-- Price Banner -->
-      <div class="bg-[#22262e] border border-[#2d323c] rounded-2xl p-3.5 mb-4 flex items-center justify-between">
+      <div class="bg-[#1e232d] border border-[#2b3342] rounded-2xl p-3.5 mb-4 flex items-center justify-between">
         <div>
           <span class="text-xs text-zinc-400 font-medium">One-Time Payment</span>
           <div class="flex items-baseline gap-1.5">
-            <span class="text-2xl font-extrabold text-[#f0b90b]">$5.00</span>
+            <span class="text-2xl font-extrabold text-[#f0b90b] font-mono">$5.00</span>
             <span class="text-xs text-zinc-400 font-medium">USDT / USD</span>
           </div>
         </div>
@@ -564,18 +576,16 @@
       </div>
 
       <!-- QR Code & Pay ID Section -->
-      <div class="bg-[#121418] border border-[#272b34] rounded-2xl p-4 text-center mb-4 shadow-inner">
+      <div class="bg-[#0f1217] border border-[#222834] rounded-2xl p-4 text-center mb-4 shadow-inner">
         <div class="flex items-center justify-center gap-1.5 mb-2">
           <span class="text-xs font-semibold text-zinc-300">Scan with Binance App to pay</span>
         </div>
 
-        <!-- Uploaded Binance QR Code Image -->
         <div class="relative inline-block bg-white p-2 rounded-2xl shadow-lg border border-[#303540] my-1">
           <img src="binancepay.jpeg" alt="Binance Pay QR Code"
             class="w-48 sm:w-52 h-auto max-h-56 object-contain rounded-xl mx-auto" />
         </div>
 
-        <!-- Pay Code & Copy Button -->
         <div class="mt-3 flex items-center justify-center gap-2">
           <span class="text-xs text-zinc-400">Pay Code / ID:</span>
           <div class="inline-flex items-center gap-2 bg-[#1e222b] border border-[#323846] px-3 py-1.5 rounded-xl">
@@ -596,7 +606,7 @@
 
       <!-- Features Included Grid -->
       <div
-        class="grid grid-cols-2 gap-2 text-[11px] text-zinc-300 mb-4 bg-[#1f2229] p-3 rounded-xl border border-zinc-800">
+        class="grid grid-cols-2 gap-2 text-[11px] text-zinc-300 mb-4 bg-[#1b2028] p-3 rounded-xl border border-zinc-800">
         <div class="flex items-center gap-1.5">
           <span class="text-[#f0b90b] font-bold">✓</span> Scientific Suite (sin, cos, √, ln...)
         </div>
@@ -616,10 +626,10 @@
         <div>
           <label for="txIdInput" class="block text-[11px] font-medium text-zinc-400 mb-1">Binance Transaction
             ID:</label>
-          <input id="txIdInput" type="text" inputmode="numeric" placeholder="Enter Binance Transaction ID"
-            class="w-full bg-[#121418] border border-[#2e333e] focus:border-[#f0b90b] focus:outline-none text-white text-xs px-3.5 py-2.5 rounded-xl transition placeholder:text-zinc-600" />
+          <input id="txIdInput" type="text" inputmode="numeric" placeholder="Enter Binance Transaction ID (e.g. 43...)"
+            class="w-full bg-[#0f1217] border border-[#2e333e] focus:border-[#f0b90b] focus:outline-none text-white text-xs px-3.5 py-2.5 rounded-xl transition placeholder:text-zinc-600 font-mono" />
 
-          <!-- Validation Error Message & Support Container -->
+          <!-- Error Alert -->
           <div id="txErrorContainer"
             class="hidden mt-2 p-2.5 bg-rose-950/40 border border-rose-800/60 rounded-xl text-xs text-rose-300">
             <div class="flex items-center justify-between gap-2">
@@ -632,10 +642,6 @@
               </div>
               <button type="button" id="openSupportFromErrorBtn"
                 class="text-[#0088cc] hover:text-[#24a1de] font-semibold underline flex items-center gap-1 shrink-0 text-[11px] cursor-pointer">
-                <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                  <path
-                    d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
-                </svg>
                 Contact Support
               </button>
             </div>
@@ -643,7 +649,7 @@
         </div>
 
         <button id="verifyPayBtn" type="button"
-          class="w-full bg-[#f0b90b] hover:bg-[#fcd535] text-zinc-950 font-bold py-3 px-4 rounded-xl transition shadow-binance active:scale-[0.98] flex items-center justify-center gap-2 text-sm mt-2 cursor-pointer">
+          class="w-full bg-[#f0b90b] hover:bg-[#fcd535] text-zinc-950 font-bold py-3 px-4 rounded-xl transition shadow-lg active:scale-[0.98] flex items-center justify-center gap-2 text-sm mt-2 cursor-pointer">
           <span>✨ Verify & Unlock PRO ($5)</span>
         </button>
 
@@ -651,10 +657,6 @@
           <span>Facing issues?</span>
           <button type="button" id="openSupportModalBtn"
             class="text-[#0088cc] hover:text-[#24a1de] underline font-medium flex items-center gap-1 cursor-pointer">
-            <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-              <path
-                d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
-            </svg>
             Contact Support
           </button>
         </div>
@@ -664,12 +666,12 @@
   </div>
 
   <!-- ========================================== -->
-  <!-- SUPPORT EMAIL CONTACT MODAL                -->
+  <!-- CONTACT SUPPORT MODAL                      -->
   <!-- ========================================== -->
   <div id="supportModal"
-    class="modal-backdrop modal-hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+    class="modal-backdrop modal-hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto font-sans">
     <div
-      class="modal-content relative w-full max-w-md bg-[#181a20] text-zinc-100 rounded-3xl border border-[#2b2f36] shadow-2xl p-6 sm:p-7 my-auto max-h-[92vh] overflow-y-auto custom-scroll">
+      class="modal-content relative w-full max-w-md bg-[#161a22] text-zinc-100 rounded-3xl border border-[#2b3342] shadow-2xl p-6 sm:p-7 my-auto max-h-[92vh] overflow-y-auto custom-scroll">
 
       <!-- Close Button -->
       <button id="closeSupportModalBtn" type="button"
@@ -680,7 +682,6 @@
         </svg>
       </button>
 
-      <!-- Support Header -->
       <div class="flex items-center gap-2.5 mb-2">
         <div class="w-8 h-8 rounded-full bg-[#f0b90b]/15 flex items-center justify-center text-[#f0b90b]">
           <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
@@ -695,36 +696,35 @@
         Send a direct message to our support inbox. We will reply to your email promptly.
       </p>
 
-      <!-- Support Form -->
       <form id="supportForm" class="space-y-3">
         <div>
           <label for="supportName" class="block text-[11px] font-medium text-zinc-400 mb-1">Your Name *</label>
           <input id="supportName" type="text" required placeholder="e.g. John"
-            class="w-full bg-[#121418] border border-[#2e333e] focus:border-[#f0b90b] focus:outline-none text-white text-xs px-3.5 py-2.5 rounded-xl transition placeholder:text-zinc-600" />
+            class="w-full bg-[#0f1217] border border-[#2e333e] focus:border-[#f0b90b] focus:outline-none text-white text-xs px-3.5 py-2.5 rounded-xl transition placeholder:text-zinc-600" />
         </div>
 
         <div>
           <label for="supportEmail" class="block text-[11px] font-medium text-zinc-400 mb-1">Your Email Address
             *</label>
           <input id="supportEmail" type="email" required placeholder="e.g. yourname@gmail.com"
-            class="w-full bg-[#121418] border border-[#2e333e] focus:border-[#f0b90b] focus:outline-none text-white text-xs px-3.5 py-2.5 rounded-xl transition placeholder:text-zinc-600" />
+            class="w-full bg-[#0f1217] border border-[#2e333e] focus:border-[#f0b90b] focus:outline-none text-white text-xs px-3.5 py-2.5 rounded-xl transition placeholder:text-zinc-600" />
         </div>
 
         <div>
           <label for="supportSubject" class="block text-[11px] font-medium text-zinc-400 mb-1">Subject / Topic</label>
           <input id="supportSubject" type="text" placeholder="e.g. Binance Pay Verification / TxID issue"
-            class="w-full bg-[#121418] border border-[#2e333e] focus:border-[#f0b90b] focus:outline-none text-white text-xs px-3.5 py-2.5 rounded-xl transition placeholder:text-zinc-600" />
+            class="w-full bg-[#0f1217] border border-[#2e333e] focus:border-[#f0b90b] focus:outline-none text-white text-xs px-3.5 py-2.5 rounded-xl transition placeholder:text-zinc-600" />
         </div>
 
         <div>
           <label for="supportMessage" class="block text-[11px] font-medium text-zinc-400 mb-1">Message *</label>
           <textarea id="supportMessage" rows="3" required
             placeholder="Describe your issue or enter your Binance Transaction ID..."
-            class="w-full bg-[#121418] border border-[#2e333e] focus:border-[#f0b90b] focus:outline-none text-white text-xs px-3.5 py-2.5 rounded-xl transition placeholder:text-zinc-600 custom-scroll resize-none"></textarea>
+            class="w-full bg-[#0f1217] border border-[#2e333e] focus:border-[#f0b90b] focus:outline-none text-white text-xs px-3.5 py-2.5 rounded-xl transition placeholder:text-zinc-600 custom-scroll resize-none"></textarea>
         </div>
 
         <button id="sendSupportMsgBtn" type="submit"
-          class="w-full bg-[#f0b90b] hover:bg-[#fcd535] text-zinc-950 font-bold py-3 px-4 rounded-xl transition shadow-binance active:scale-[0.98] flex items-center justify-center gap-2 text-xs mt-3 cursor-pointer">
+          class="w-full bg-[#f0b90b] hover:bg-[#fcd535] text-zinc-950 font-bold py-3 px-4 rounded-xl transition shadow-lg active:scale-[0.98] flex items-center justify-center gap-2 text-xs mt-3 cursor-pointer">
           <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
             <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
           </svg>
@@ -735,7 +735,7 @@
     </div>
   </div>
 
-  <!-- Canvas Confetti Container for Unlock Celebration -->
+  <!-- Confetti Canvas -->
   <canvas id="confettiCanvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
 
   <script src="script.js"></script>

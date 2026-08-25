@@ -1,5 +1,5 @@
 // =========================================================
-// Minimal Calculator - Standard Free Tier & PRO Scientific Suite
+// Minimal Calculator - Free Standard Tier & PRO Scientific Suite ($5)
 // =========================================================
 
 // DOM Elements - Calculator Display & Container
@@ -7,8 +7,6 @@ const calcContainer = document.getElementById('calcContainer');
 const display = document.getElementById('display');
 const expression = document.getElementById('expression');
 const copyResultBtn = document.getElementById('copyResultBtn');
-const modeTitle = document.getElementById('modeTitle');
-const proTitleBadge = document.getElementById('proTitleBadge');
 const memoryIndicator = document.getElementById('memoryIndicator');
 const angleModeDisplay = document.getElementById('angleModeDisplay');
 const themeToggle = document.getElementById('themeToggle');
@@ -21,7 +19,7 @@ const soundIcon = document.getElementById('soundIcon');
 const historyToggleBtn = document.getElementById('historyToggleBtn');
 const angleToggleBtn = document.getElementById('angleToggleBtn');
 
-// DOM Elements - Account Status & Paywall
+// DOM Elements - Account Status & Triggers
 const userStatusBadge = document.getElementById('userStatusBadge');
 const badgeText = document.getElementById('badgeText');
 const badgeDot = document.getElementById('badgeDot');
@@ -65,8 +63,6 @@ const confettiCanvas = document.getElementById('confettiCanvas');
 // Storage Keys & Persistent State
 // =========================================================
 const STORAGE_KEYS = {
-  USAGE_COUNT: 'calc_usage_count',
-  LAST_DATE: 'calc_last_date',
   IS_PREMIUM: 'calc_is_premium',
   HISTORY: 'calc_history_list',
   SOUND_ENABLED: 'calc_sound_enabled',
@@ -74,33 +70,8 @@ const STORAGE_KEYS = {
   THEME: 'calc_theme'
 };
 
-// Helper: Get local date string in YYYY-MM-DD
-function getTodayDateString() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-// Check & Auto-Reset Daily Limit on new day
-function checkDailyReset() {
-  const today = getTodayDateString();
-  const storedDate = localStorage.getItem(STORAGE_KEYS.LAST_DATE);
-
-  if (storedDate !== today) {
-    // New day -> Reset daily usage count to 0
-    localStorage.setItem(STORAGE_KEYS.LAST_DATE, today);
-    localStorage.setItem(STORAGE_KEYS.USAGE_COUNT, '0');
-    return 0;
-  }
-
-  return parseInt(localStorage.getItem(STORAGE_KEYS.USAGE_COUNT) || '0', 10);
-}
-
 // Initialize persistent state
 let isPremium = localStorage.getItem(STORAGE_KEYS.IS_PREMIUM) === 'true';
-let usageCount = checkDailyReset();
 let soundEnabled = localStorage.getItem(STORAGE_KEYS.SOUND_ENABLED) !== 'false';
 let angleMode = localStorage.getItem(STORAGE_KEYS.ANGLE_MODE) || 'DEG'; // 'DEG' or 'RAD'
 let memoryValue = 0;
@@ -111,8 +82,6 @@ try {
   calculationHistory = [];
 }
 
-let pendingCalculation = null;
-
 // Calculator Internal Arithmetic State
 let currentValue = '0';
 let previousValue = null;
@@ -120,7 +89,7 @@ let operator = null;
 let overwrite = false;
 
 // =========================================================
-// Web Audio API Synthesizer (Click Sound FX)
+// Web Audio API Synthesizer (Click Sound FX - PRO Exclusive)
 // =========================================================
 let audioCtx = null;
 function playKeySound(type = 'default') {
@@ -186,17 +155,13 @@ function showToast(message, icon = '✨', duration = 3500) {
 // Account Status & UI Mode Management
 // =========================================================
 function updateAccountStatusUI() {
-  usageCount = checkDailyReset();
-
   if (isPremium) {
-    // 👑 PRO PLAN MODE: Positive Green Color
+    // 👑 LIFETIME PRO MODE: Unlocks Scientific Suite, History, Memory, Sound FX
     if (userStatusBadge) {
-      userStatusBadge.className = 'inline-flex items-center gap-1.5 text-xs px-2.5 py-0.5 rounded-full font-semibold whitespace-nowrap bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-sm transition-all';
-      userStatusBadge.innerHTML = '<span>👑</span> <span>PRO Version</span>';
+      userStatusBadge.className = 'inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full font-semibold whitespace-nowrap bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-sm transition-all';
+      userStatusBadge.innerHTML = '<span>👑</span> <span>PRO Lifetime Active</span>';
     }
 
-    if (modeTitle) modeTitle.textContent = 'Scientific PRO';
-    if (proTitleBadge) proTitleBadge.classList.add('hidden');
     if (premiumTriggerBtn) premiumTriggerBtn.classList.add('hidden');
     if (soundToggleBtn) soundToggleBtn.classList.remove('hidden');
     if (historyToggleBtn) historyToggleBtn.classList.remove('hidden');
@@ -206,7 +171,6 @@ function updateAccountStatusUI() {
     }
     if (angleToggleBtn) angleToggleBtn.textContent = angleMode;
 
-    // Show Scientific Suite with smooth animation
     if (proScientificSection) {
       proScientificSection.classList.remove('hidden');
     }
@@ -217,11 +181,10 @@ function updateAccountStatusUI() {
     }
 
     if (quickUnlockBtn) {
-      quickUnlockBtn.innerHTML = '<span>👑</span> <span>PRO Active</span>';
-      quickUnlockBtn.className = 'link-btn rounded-full border px-3.5 py-1.5 text-xs font-semibold text-emerald-500 border-emerald-500/30 transition flex items-center gap-1 shadow-sm whitespace-nowrap';
+      quickUnlockBtn.innerHTML = '<span>👑</span> <span>PRO Lifetime Active</span>';
+      quickUnlockBtn.className = 'link-pill rounded-full px-3.5 py-1.5 text-xs font-semibold text-emerald-500 border-emerald-500/30 transition flex items-center gap-1 shadow-sm whitespace-nowrap cursor-default';
     }
 
-    // Memory Indicator
     if (memoryIndicator) {
       if (memoryValue !== 0) {
         memoryIndicator.classList.remove('hidden');
@@ -231,15 +194,18 @@ function updateAccountStatusUI() {
     }
 
   } else {
-    // 🆓 FREE PLAN MODE: Hide all PRO features and Scientific section
-    if (modeTitle) modeTitle.textContent = 'Standard';
-    if (proTitleBadge) proTitleBadge.classList.add('hidden');
+    // 🆓 FREE PLAN: Standard Calculator (100% Free & Unlimited basic calculations)
+    if (userStatusBadge) {
+      userStatusBadge.className = 'inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full font-semibold whitespace-nowrap bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/30 shadow-sm transition-all';
+      userStatusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0"></span><span>Free Plan</span>';
+    }
+
+    if (premiumTriggerBtn) premiumTriggerBtn.classList.remove('hidden');
     if (soundToggleBtn) soundToggleBtn.classList.add('hidden');
     if (historyToggleBtn) historyToggleBtn.classList.add('hidden');
     if (angleModeDisplay) angleModeDisplay.classList.add('hidden');
     if (memoryIndicator) memoryIndicator.classList.add('hidden');
 
-    // Hide Scientific Suite completely
     if (proScientificSection) {
       proScientificSection.classList.add('hidden');
     }
@@ -250,35 +216,31 @@ function updateAccountStatusUI() {
     }
 
     if (quickUnlockBtn) {
-      quickUnlockBtn.innerHTML = '<span>⚡</span> <span>Upgrade PRO</span>';
-      quickUnlockBtn.className = 'link-btn rounded-full border px-3.5 py-1.5 text-xs font-semibold text-[#f0b90b] border-[#f0b90b]/40 hover:bg-[#f0b90b]/10 transition flex items-center gap-1 cursor-pointer shadow-sm whitespace-nowrap';
-    }
-
-    if (usageCount === 0) {
-      // 1 Free Use Available: Yellow / Amber Alert Color
-      if (userStatusBadge) {
-        userStatusBadge.className = 'inline-flex items-center gap-1.5 text-xs px-2.5 py-0.5 rounded-full font-medium whitespace-nowrap bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 shadow-sm transition-all';
-        userStatusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shrink-0"></span><span>1 Free Use Left</span>';
-      }
-      if (premiumTriggerBtn) premiumTriggerBtn.classList.add('hidden');
-    } else {
-      // Daily Free Limit Reached: Alert / Warning Color
-      if (userStatusBadge) {
-        userStatusBadge.className = 'inline-flex items-center gap-1.5 text-xs px-2.5 py-0.5 rounded-full font-medium whitespace-nowrap bg-amber-600/15 text-amber-700 dark:text-amber-400 border border-amber-600/30 shadow-sm transition-all';
-        userStatusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping shrink-0"></span><span>Daily Limit Reached</span>';
-      }
-      if (premiumTriggerBtn) premiumTriggerBtn.classList.remove('hidden');
+      quickUnlockBtn.innerHTML = '<span>⚡</span> <span>Upgrade PRO ($5)</span>';
+      quickUnlockBtn.className = 'link-pill rounded-full px-3.5 py-1.5 text-xs font-semibold text-amber-600 dark:text-[#f0b90b] border-amber-500/40 hover:bg-amber-500/10 transition flex items-center gap-1 cursor-pointer shadow-sm whitespace-nowrap';
     }
   }
 }
 
+// Reset Plan back to Free Tier
+function resetPlan() {
+  localStorage.removeItem(STORAGE_KEYS.IS_PREMIUM);
+  localStorage.removeItem(STORAGE_KEYS.HISTORY);
+
+  isPremium = false;
+  memoryValue = 0;
+  calculationHistory = [];
+
+  clearAll();
+  updateAccountStatusUI();
+  renderHistoryList();
+  showToast('🔄 Reset to Free Plan! Standard calculator is 100% free.', '✨', 3500);
+}
+
 // =========================================================
-// Paywall Modal Management
+// Paywall Modal Management & Lifetime Unlock
 // =========================================================
-function openPaywallModal(pendingAction = null) {
-  if (pendingAction) {
-    pendingCalculation = pendingAction;
-  }
+function openPaywallModal() {
   if (txErrorContainer) txErrorContainer.classList.add('hidden');
   if (txIdInput) {
     txIdInput.classList.remove('border-rose-500');
@@ -311,72 +273,15 @@ function validateBinanceTxId(txId) {
 function unlockPremium() {
   isPremium = true;
   localStorage.setItem(STORAGE_KEYS.IS_PREMIUM, 'true');
+
   updateAccountStatusUI();
   closePaywallModal();
-
-  // Trigger celebration effects
   launchConfetti();
-  showToast('🎉 Scientific Suite & Unlimited Access Enabled.', '👑', 4500);
-
-  // Execute and reveal pending calculation if any
-  if (pendingCalculation && typeof pendingCalculation === 'function') {
-    const actionToRun = pendingCalculation;
-    pendingCalculation = null;
-    actionToRun();
-  }
+  showToast('🎉 PRO Lifetime Access Unlocked! Thank you for your support.', '👑', 5000);
 }
 
 // =========================================================
-// App Reset Option (Always Resets Back to Free Plan)
-// =========================================================
-function resetTrial() {
-  // Clear all localStorage state back to Free plan
-  localStorage.removeItem(STORAGE_KEYS.IS_PREMIUM);
-  localStorage.setItem(STORAGE_KEYS.USAGE_COUNT, '0');
-  localStorage.setItem(STORAGE_KEYS.LAST_DATE, getTodayDateString());
-  localStorage.removeItem(STORAGE_KEYS.HISTORY);
-
-  isPremium = false;
-  usageCount = 0;
-  memoryValue = 0;
-  calculationHistory = [];
-  pendingCalculation = null;
-
-  clearAll();
-  updateAccountStatusUI();
-  renderHistoryList();
-  showToast('🔄 App reset to Free Plan! 1 daily free calculation available.', '✨', 4000);
-}
-
-// =========================================================
-// Calculation Daily Limitation Gate
-// =========================================================
-function checkCalculationAccess(computeCallback) {
-  if (isPremium) {
-    computeCallback();
-    return;
-  }
-
-  usageCount = checkDailyReset();
-
-  if (usageCount === 0) {
-    // 1st Calculation of the day: Allowed
-    computeCallback();
-    usageCount = 1;
-    const today = getTodayDateString();
-    localStorage.setItem(STORAGE_KEYS.USAGE_COUNT, '1');
-    localStorage.setItem(STORAGE_KEYS.LAST_DATE, today);
-    updateAccountStatusUI();
-    showToast('Free limit reached!!', '⚠️', 4000);
-  } else {
-    // 2nd Attempt onwards: Blocked -> Show Paywall Modal
-    openPaywallModal(computeCallback);
-    showToast('🔒 Daily limit reached! Upgrade to PRO for unlimited calculations.', '⚡', 4000);
-  }
-}
-
-// =========================================================
-// Core Calculator Logic & Formatting
+// Core Calculator Logic & Formatting (Free & Unlimited)
 // =========================================================
 function formatNumber(value) {
   if (!Number.isFinite(value)) {
@@ -406,7 +311,6 @@ function clearAll() {
   previousValue = null;
   operator = null;
   overwrite = false;
-  pendingCalculation = null;
   updateDisplay();
 }
 
@@ -458,13 +362,11 @@ function setOperator(nextOperator) {
   if (currentValue === 'Error') return;
 
   if (operator && !overwrite) {
-    checkCalculationAccess(() => {
-      evaluateInternal();
-      previousValue = Number.parseFloat(currentValue);
-      operator = nextOperator;
-      overwrite = true;
-      updateDisplay();
-    });
+    evaluateInternal();
+    previousValue = Number.parseFloat(currentValue);
+    operator = nextOperator;
+    overwrite = true;
+    updateDisplay();
     return;
   }
 
@@ -477,17 +379,16 @@ function setOperator(nextOperator) {
 function applyPercent() {
   playKeySound('default');
   if (currentValue === 'Error') return;
-  checkCalculationAccess(() => {
-    const numericValue = Number.parseFloat(currentValue);
-    if (Number.isNaN(numericValue)) {
-      currentValue = 'Error';
-    } else {
-      currentValue = formatNumber(numericValue / 100);
-      recordHistory(`${numericValue} %`, currentValue);
-    }
-    overwrite = true;
-    updateDisplay();
-  });
+
+  const numericValue = Number.parseFloat(currentValue);
+  if (Number.isNaN(numericValue)) {
+    currentValue = 'Error';
+  } else {
+    currentValue = formatNumber(numericValue / 100);
+    recordHistory(`${numericValue} %`, currentValue);
+  }
+  overwrite = true;
+  updateDisplay();
 }
 
 // Factorial calculation helper
@@ -499,10 +400,13 @@ function factorial(n) {
   return result;
 }
 
-// Scientific Single-Operand & Math Suite (PRO only)
+// Scientific Single-Operand & Math Suite (PRO Only)
 function executeScientificFunction(fnName) {
+  if (!isPremium) {
+    openPaywallModal();
+    return;
+  }
   playKeySound('default');
-  if (!isPremium) return;
 
   const numericValue = Number.parseFloat(currentValue);
   if (Number.isNaN(numericValue)) {
@@ -569,10 +473,13 @@ function executeScientificFunction(fnName) {
   }
 }
 
-// Insert Constant (π, e)
+// Insert Constant (π, e - PRO Only)
 function insertConstant(constType) {
+  if (!isPremium) {
+    openPaywallModal();
+    return;
+  }
   playKeySound('default');
-  if (!isPremium) return;
 
   if (constType === 'pi') {
     currentValue = formatNumber(Math.PI);
@@ -583,10 +490,13 @@ function insertConstant(constType) {
   updateDisplay();
 }
 
-// Memory Functions (MC, MR, M+, M-)
+// Memory Functions (MC, MR, M+, M- - PRO Only)
 function handleMemory(fn) {
+  if (!isPremium) {
+    openPaywallModal();
+    return;
+  }
   playKeySound('default');
-  if (!isPremium) return;
 
   const currentNum = Number.parseFloat(currentValue) || 0;
 
@@ -614,10 +524,10 @@ function handleMemory(fn) {
   updateAccountStatusUI();
 }
 
-// Angle Mode Toggle (DEG / RAD)
+// Angle Mode Toggle (DEG / RAD - PRO Only)
 function toggleAngleMode() {
-  playKeySound('default');
   if (!isPremium) return;
+  playKeySound('default');
 
   angleMode = angleMode === 'DEG' ? 'RAD' : 'DEG';
   localStorage.setItem(STORAGE_KEYS.ANGLE_MODE, angleMode);
@@ -625,7 +535,7 @@ function toggleAngleMode() {
   showToast(`Angle Mode set to ${angleMode}`, '📐', 2000);
 }
 
-// Calculation History Logger
+// Calculation History Logger (PRO Only)
 function recordHistory(calcExpr, calcResult) {
   if (!isPremium || calcResult === 'Error') return;
 
@@ -651,17 +561,16 @@ function renderHistoryList() {
   }
 
   historyListContainer.innerHTML = calculationHistory.map(item => `
-    <div class="bg-[#121418] hover:bg-[#20242c] p-2.5 rounded-xl border border-zinc-800 transition cursor-pointer flex items-center justify-between history-item"
+    <div class="bg-[#0f1217] hover:bg-[#1a1f29] p-3 rounded-xl border border-zinc-800 transition cursor-pointer flex items-center justify-between history-item"
          data-value="${item.result}">
       <div>
         <div class="text-[11px] text-zinc-400 font-mono">${item.expr}</div>
         <div class="text-sm font-bold text-white font-mono mt-0.5">${item.result}</div>
       </div>
-      <span class="text-[10px] text-zinc-500">${item.time}</span>
+      <span class="text-[10px] text-zinc-500 font-mono">${item.time}</span>
     </div>
   `).join('');
 
-  // Attach click to load into display
   if (typeof historyListContainer.querySelectorAll === 'function') {
     historyListContainer.querySelectorAll('.history-item').forEach(item => {
       item.addEventListener('click', () => {
@@ -678,7 +587,7 @@ function renderHistoryList() {
   }
 }
 
-// Internal Evaluation Logic
+// Internal Evaluation Logic (Always free & unrestricted)
 function evaluateInternal() {
   if (!operator || previousValue === null) {
     return;
@@ -731,10 +640,7 @@ function evaluateInternal() {
 
 function evaluate() {
   playKeySound('equals');
-  if (!operator || previousValue === null) {
-    return;
-  }
-  checkCalculationAccess(evaluateInternal);
+  evaluateInternal();
 }
 
 // Copy Display Result to Clipboard
@@ -751,6 +657,7 @@ function copyDisplayResult() {
 // Sound Toggle & Theme Toggle
 // =========================================================
 function toggleSound() {
+  if (!isPremium) return;
   soundEnabled = !soundEnabled;
   localStorage.setItem(STORAGE_KEYS.SOUND_ENABLED, soundEnabled ? 'true' : 'false');
   if (soundIcon) soundIcon.textContent = soundEnabled ? '🔊' : '🔇';
@@ -759,7 +666,7 @@ function toggleSound() {
 
 function initTheme() {
   const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME);
-  const isDark = savedTheme === 'dark';
+  const isDark = savedTheme === 'dark' || savedTheme === null; // Dark mode by default
   if (isDark) {
     document.documentElement.classList.add('dark');
     document.body.classList.add('dark');
@@ -808,9 +715,12 @@ function copyPayCode() {
   });
 }
 
-// History Modal Controls
+// History Modal Controls (PRO Only)
 function openHistoryModal() {
-  if (!isPremium) return;
+  if (!isPremium) {
+    openPaywallModal();
+    return;
+  }
   renderHistoryList();
   if (historyModal) {
     historyModal.classList.remove('modal-hidden');
@@ -916,7 +826,7 @@ function launchConfetti() {
   confettiCanvas.height = window.innerHeight;
 
   const particles = [];
-  const colors = ['#f0b90b', '#fcd535', '#10b981', '#6366f1', '#ec4899', '#ffffff'];
+  const colors = ['#f0b90b', '#fcd535', '#10b981', '#38bdf8', '#a855f7', '#ffffff'];
 
   for (let i = 0; i < 90; i++) {
     particles.push({
@@ -986,7 +896,13 @@ buttons.forEach((button) => {
     button.addEventListener('click', toggleSign);
   } else if (action === 'scientific') {
     if (fn === 'pow') {
-      button.addEventListener('click', () => setOperator('^'));
+      button.addEventListener('click', () => {
+        if (!isPremium) {
+          openPaywallModal();
+        } else {
+          setOperator('^');
+        }
+      });
     } else if (fn) {
       button.addEventListener('click', () => executeScientificFunction(fn));
     }
@@ -1062,7 +978,7 @@ if (verifyPayBtn) {
         txIdInput.classList.remove('border-[#2e333e]');
         txIdInput.focus();
       }
-      showToast('⚠️ Invalid Binance Transaction ID', '❌', 3500);
+      showToast('⚠️ Invalid Binance Transaction ID (starts with 43, 18-19 digits)', '❌', 3500);
       return;
     }
 
@@ -1077,21 +993,21 @@ if (verifyPayBtn) {
 }
 
 if (premiumTriggerBtn) {
-  premiumTriggerBtn.addEventListener('click', () => openPaywallModal(null));
+  premiumTriggerBtn.addEventListener('click', () => openPaywallModal());
 }
 
 if (quickUnlockBtn) {
   quickUnlockBtn.addEventListener('click', () => {
     if (isPremium) {
-      showToast('👑 PRO version is already active!', '✨');
+      showToast('👑 Lifetime PRO is active!', '✨');
     } else {
-      openPaywallModal(null);
+      openPaywallModal();
     }
   });
 }
 
 if (resetTrialBtn) {
-  resetTrialBtn.addEventListener('click', resetTrial);
+  resetTrialBtn.addEventListener('click', resetPlan);
 }
 
 // Support Modal Listeners
@@ -1131,8 +1047,12 @@ window.addEventListener('keydown', (e) => {
     appendDigit('.');
   } else if (e.key === '+' || e.key === '-' || e.key === '*' || e.key === '/') {
     setOperator(e.key);
-  } else if (e.key === '^' && isPremium) {
-    setOperator('^');
+  } else if (e.key === '^') {
+    if (isPremium) {
+      setOperator('^');
+    } else {
+      openPaywallModal();
+    }
   } else if (e.key === '%') {
     applyPercent();
   } else if (e.key === 'Enter' || e.key === '=') {
